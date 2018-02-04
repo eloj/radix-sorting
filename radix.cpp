@@ -47,7 +47,7 @@ void timespec_diff(struct timespec *start, struct timespec *stop,
 template <typename T>
 void print_sort(T *keys, size_t n) {
 	for (size_t i = 0 ; i < n ; ++i) {
-		printf("%zu: %" PRIx64 "\n", i, (uint64_t)keys[i]);
+		printf("%04zu: %016" PRIx64 " int:%11d float:%f \n", i, (uint64_t)keys[i], (int)keys[i], (float)(int)keys[i]);
 	}
 }
 
@@ -65,8 +65,8 @@ size_t verify_sort(T *keys, size_t n) {
 	return 0;
 }
 
-template <typename T>
-T* radix_sort(T * RESTRICT src, T * RESTRICT aux, size_t n) {
+template <typename T, typename KeyFunc>
+T* radix_sort(T * RESTRICT src, T * RESTRICT aux, size_t n, KeyFunc kf) {
 	constexpr int wc = sizeof(T);
 	size_t hist[wc][256] = { }; // 8K/16K of histograms
 	int cols[wc];
@@ -80,11 +80,11 @@ T* radix_sort(T * RESTRICT src, T * RESTRICT aux, size_t n) {
 	// Histograms
 	size_t n_unsorted = n;
 	for (size_t i = 0 ; i < n ; ++i) {
-		if ((i < n - 1) && (src[i] <= src[i+1])) {
+		if ((i < n - 1) && (kf(src[i]) <= kf(src[i+1]))) {
 			--n_unsorted;
 		}
 		for (int j=0 ; j < wc ; ++j) {
-			++hist[j][(src[i] >> (j << 3)) & 0xFF];
+			++hist[j][(kf(src[i]) >> (j << 3)) & 0xFF];
 		}
 	}
 
@@ -95,13 +95,12 @@ T* radix_sort(T * RESTRICT src, T * RESTRICT aux, size_t n) {
 
 	// Sample first key to determine if any columns can be skipped
 	ncols = 0;
-	T key0 = *src;
+	T key0 = kf(*src);
 	for (int i = 0 ; i < wc ; ++i) {
 		if (hist[i][(key0 >> (i << 3)) & 0xFF] != n) {
 			cols[ncols++] = i;
 		}
 	}
-
 
 #if 0
 	printf("ncols=%d\n", ncols);
@@ -124,7 +123,7 @@ T* radix_sort(T * RESTRICT src, T * RESTRICT aux, size_t n) {
 	for (int i = 0 ; i < ncols ; ++i) {
 		for (size_t j = 0 ; j < n ; ++j) {
 			T k = src[j];
-			size_t dst = hist[cols[i]][(k >> (cols[i] << 3)) & 0xFF]++;
+			size_t dst = hist[cols[i]][(kf(k) >> (cols[i] << 3)) & 0xFF]++;
 			aux[dst] = k;
 
 		}
@@ -144,7 +143,12 @@ template <typename T>
 int test_radix_sort(T* src, size_t n) {
 	T *aux = new T[n];
 
-	auto *sorted = radix_sort(src, aux, n);
+	auto *sorted = radix_sort(src, aux, n, [](const T& entry) __attribute__((pure, hot)) {
+		// return entry;  // standard
+		// return ~entry; // reverse
+		return entry ^ 0x80000000; // signed integer
+		// T mask = -T((int)entry >> 31) | 0x80000000; return entry ^ mask; // float
+	});
 
 	if (sorted == aux) {
 		printf("Copying aux buffer.\n");
@@ -187,8 +191,8 @@ int main(int argc, char *argv[])
 {
 	int alg = argc > 1 ? atoi(argv[1]) : 0;
 
-	size_t bytes = 256 * 4;
-	auto *src = (uint32_t*)read_file("/home/eddy/dev/work/keys32.dat", &bytes);
+	size_t bytes = 4*40;
+	auto *src = (int32_t*)read_file("/home/eddy/dev/work/keys32.dat", &bytes);
 	assert(src);
 	size_t n = bytes / sizeof(*src);
 
@@ -213,11 +217,13 @@ int main(int argc, char *argv[])
 	}
 	clock_gettime(CLOCK_MONOTONIC_RAW, &tp_end);
 
+#if 0
 	if (verify_sort(src, n) != 0) {
 		return 1;
 	}
+#endif
 
-	// print_sort(src, n);
+	print_sort(src, n);
 
 	struct timespec tp_res;
 	timespec_diff(&tp_start, &tp_end, &tp_res);
