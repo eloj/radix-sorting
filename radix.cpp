@@ -8,9 +8,6 @@
 
 /*
 	TODO: counting sort for 8 and 16-bit integers.
-	TODO: handle negative numbers.
-	TODO: handle floats
-	TODO: handle asc vs desc
 	TODO: static error if called on unsupported type.
 */
 
@@ -47,12 +44,15 @@ void timespec_diff(struct timespec *start, struct timespec *stop,
 template <typename T>
 void print_sort(T *keys, size_t n) {
 	for (size_t i = 0 ; i < n ; ++i) {
-		printf("%04zu: %016" PRIx64 " int:%11d float:%f \n", i, (uint64_t)keys[i], (int)keys[i], (float)(int)keys[i]);
+		printf("%04zu: %08x int:%d", i, (uint32_t)keys[i], (int32_t)keys[i]);
+		// printf("float:%f ", *(reinterpret_cast<float*>(keys + i)));
+		printf("\n");
 	}
 }
 
 template <typename T>
 size_t verify_sort(T *keys, size_t n) {
+	printf("Verifying sort... ");
 	for (size_t i = 1 ; i < n ; ++i) {
 		if (keys[i-1] > keys[i]) {
 			printf("Sort if array at %p invalid.\n", keys);
@@ -61,6 +61,7 @@ size_t verify_sort(T *keys, size_t n) {
 			return 1;
 		}
 	}
+	printf("OK.\n");
 
 	return 0;
 }
@@ -77,21 +78,26 @@ T* radix_sort(T * RESTRICT src, T * RESTRICT aux, size_t n, KeyFunc kf) {
 
 //	printf("wc=%d\n", wc);
 
+// size_t n_unsorted = n;
+
 	// Histograms
-	size_t n_unsorted = n;
 	for (size_t i = 0 ; i < n ; ++i) {
+#if 0
+		// pre-sorted detection disabled, since it requires knowledge of sort-order
 		if ((i < n - 1) && (kf(src[i]) <= kf(src[i+1]))) {
 			--n_unsorted;
 		}
+#endif
 		for (int j=0 ; j < wc ; ++j) {
 			++hist[j][(kf(src[i]) >> (j << 3)) & 0xFF];
 		}
 	}
 
+#if 0
+//	printf("n_unsorted=%zu\n", n_unsorted);
 	if (n_unsorted < 2)
 		return src;
-
-//	printf("n_unsorted=%zu\n", n_unsorted);
+#endif
 
 	// Sample first key to determine if any columns can be skipped
 	ncols = 0;
@@ -144,10 +150,11 @@ int test_radix_sort(T* src, size_t n) {
 	T *aux = new T[n];
 
 	auto *sorted = radix_sort(src, aux, n, [](const T& entry) __attribute__((pure, hot)) {
-		// return entry;  // standard
-		// return ~entry; // reverse
-		return entry ^ 0x80000000; // signed integer
-		// T mask = -T((int)entry >> 31) | 0x80000000; return entry ^ mask; // float
+		return entry;  // unsigned (asc)
+		// return ~entry; // unsigned (desc)
+		// return entry ^ 0x80000000; // signed (asc)
+		// return ~(entry ^ 0x80000000); // signed (desc)
+		// return entry ^ (-((uint32_t)entry >> 31) | 0x80000000); // float (if sign-bit; invert, else flip sign-bit)
 	});
 
 	if (sorted == aux) {
@@ -189,17 +196,30 @@ static void* read_file(const char *filename, size_t *limit) {
 
 int main(int argc, char *argv[])
 {
-	int alg = argc > 1 ? atoi(argv[1]) : 0;
+	int entries = argc > 1 ? atoi(argv[1]) : 0;
+	int alg = argc > 2 ? atoi(argv[2]) : 0;
+	const char *src_fn = "40M_32bit_keys.dat";
 
-	size_t bytes = 4*40;
-	auto *src = (int32_t*)read_file("/home/eddy/dev/work/keys32.dat", &bytes);
+	printf("alg=%d, entries=%d, src='%s'\n", alg, entries, src_fn);
+
+	size_t bytes = 4*entries;
+	uint32_t *src = (uint32_t*)read_file(src_fn, &bytes);
 	assert(src);
+
 	size_t n = bytes / sizeof(*src);
 
 #if 0
+	// Mangle input to demonstrate column selection.
 	for (size_t i=0 ; i < n ; ++i) {
 		src[i] &= 0x00FFFFFF;
 	}
+#endif
+
+#if 0
+	// Small test for floats. Note that underlying type should remain uintXX_t, hence copy
+	float f[] = { 128.0f, 646464.0f, 0.0f, -0.0f, -0.5f, 0.5f, -128.0f };
+	memcpy(src, f, sizeof(f));
+	n = sizeof(f)/sizeof(f[0]);
 #endif
 
 	struct timespec tp_start;
@@ -214,16 +234,21 @@ int main(int argc, char *argv[])
 		case 1:
 			test_insert_sort(src, n);
 			break;
+		default:
+			fprintf(stderr, "Unknown algorithm picked, %d\n", alg);
+			break;
 	}
 	clock_gettime(CLOCK_MONOTONIC_RAW, &tp_end);
 
-#if 0
+#ifdef VERIFY_SORT
 	if (verify_sort(src, n) != 0) {
 		return 1;
 	}
 #endif
 
-	print_sort(src, n);
+	// Debug print some of the sorted list
+	size_t nprint = 40;
+	print_sort(src, std::min(n, nprint));
 
 	struct timespec tp_res;
 	timespec_diff(&tp_start, &tp_end, &tp_res);
