@@ -12,7 +12,7 @@ void counting_sort_8(uint8_t *arr, size_t n)
 		cnt[arr[i]]++;
 	}
 
-	// Write n_a a's to the array in order.
+	// Write cnt_a a's to the array in order.
 	i = 0;
 	for (size_t a = 0 ; a < 256 ; ++a) {
 		while (cnt[a]--)

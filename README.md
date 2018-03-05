@@ -17,11 +17,47 @@ using DDR3-1333.
 
 ## Background
 
+_TODO_
+
 ## From the top; Counting sort
+
+The simplest way to sort an array of integers, without comparisons, is to simply count
+how many there are of each unique integer, and use those counts to write the result.
+
+This is the most basic [counting sort](https://en.wikipedia.org/wiki/Counting_sort).
+
+```c
+void counting_sort_8(uint8_t *arr, size_t n)
+{
+	size_t cnt[256] = { 0 };
+	size_t i;
+
+	// Count number of occurences of each octet.
+	for (i = 0 ; i < n ; ++i) {
+		cnt[arr[i]]++;
+	}
+
+	// Write cnt_a a's to the array in order.
+	i = 0;
+	for (size_t a = 0 ; a < 256 ; ++a) {
+		while (cnt[a]--)
+			arr[i++] = a;
+	}
+}
+```
+
+You could easily extend this code to work with 16-bit values, but if you try to push much further the drawbacks
+of a _general_ counting sort become fairly obvious; you need a location (_bucket_) to store the count for each unique
+integer. For 8- and 16-bit numbers this would amount to `2^8*4`=1KiB and `2^16*4`=256KiB of memory. For
+32-bit integers, it'd require `2^32*4`=16GiB of memory.
 
 ## Step two; Histogram sort
 
+_TODO_
+
 ## All together now; Radix sort
+
+_TODO_
 
 ## TODO
 
