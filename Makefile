@@ -1,6 +1,9 @@
 OPT=-O3 -g -fomit-frame-pointer -funroll-loops -fstrict-aliasing -march=native -mtune=native -msse4
-WARNFLAGS=-Wall -Wextra
-CXXFLAGS=-std=gnu++14 -fstack-protector -fvisibility=hidden $(WARNFLAGS)
+WARNFLAGS=-Wall -Wextra -Wno-unused-parameter
+MISCFLAGS=-fstack-protector -fvisibility=hidden
+CFLAGS=-std=c11 $(OPT) $(MISCFLAGS) $(WARNFLAGS)
+CXXFLAGS=-std=gnu++14 $(OPT) $(MISCFLAGS) $(WARNFLAGS)
+
 # -Wsuggest-attribute=pure
 #XXHASHDIR:=../../EXT/xxHash
 #XXHASHFLAGS:=-L${XXHASHDIR} -I${XXHASHDIR} -l:libxxhash.a
@@ -11,11 +14,16 @@ endif
 
 .PHONY: genkeys clean
 
-all: radix genkeys
+all: radix counting_sort genkeys
+
+test:
 	${TEST_PREFIX} ./radix $N
 
+counting_sort: counting_sort.c
+	$(CC) $(CFLAGS) $< -o $@
+
 radix: radix.cpp
-	$(CXX) $(CXXFLAGS) $(OPT) -DVERIFY_SORT radix.cpp -o radix
+	$(CXX) $(CXXFLAGS) -DVERIFY_SORT radix.cpp -o $@
 
 genkeys: 40M_32bit_keys.dat
 
@@ -23,4 +31,4 @@ genkeys: 40M_32bit_keys.dat
 	dd if=/dev/urandom bs=1024 count=156250 of=$@
 
 clean:
-	rm -f radix core.*
+	rm -f radix counting_sort core.*
