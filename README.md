@@ -11,16 +11,16 @@ The ideas behind radix sorting are not new in any way, but seems to have become,
 if not forgotten, so at least under-utilized, as over the years _quicksort_ became
 the go-to "default" sorting algorithm.
 
+Unless otherwise specified, this code is written foremost to be clear and easy to understand.
+
+All code is provided under the [MIT License](LICENSE).
+
+## Motivation
+
 This code can sort 40 million 32-bit integers in under half a second using a single
 core of an [Intel i5-3570T](https://ark.intel.com/products/65521/Intel-Core-i5-3570T-Processor-6M-Cache-up-to-3_30-GHz),
 a low-TDP CPU from 2012 using DDR3-1333. `std::sort` requires ~3.5s for the same task (with the
 caveat that it's _in-place_).
-
-Unless otherwise specified, this code is written foremost to be clear and easy to understand.
-
-## Background
-
-_TODO_
 
 ## From the top; Counting sort
 
