@@ -28,6 +28,8 @@ how many there are of each unique integer, and use those counts to write the res
 
 This is the most basic [counting sort](https://en.wikipedia.org/wiki/Counting_sort).
 
+[Listing 1](counting_sort_8.c):
+
 ```c
 void counting_sort_8(uint8_t *arr, size_t n)
 {
@@ -64,6 +66,8 @@ any elements either, it doesn't really make sense to think of it as being _stabl
 
 To get us closer to radix sorting, we now need to consider a slightly more general variant where we're "rearranging"
 input elements:
+
+[Listing 2](counting_sort_8s.c):
 
 ```c
 void counting_sort_8s(uint8_t *arr, uint8_t *aux, size_t n)
@@ -115,8 +119,68 @@ entry there. We then increase the count of the prefix sum by one, which guarante
 is written just after this one.
 
 Because we are processing the input entries in order, from the lowest to the highest index, and preserving
-this order when we write them out, this sort is in essence stable. That said, it's a bit of a pointless distinction
+this order when we write them out, this sort is in essence _stable_. That said, it's a bit of a pointless distinction
 since we're treating each input entry, as a whole, as the key.
+
+With a few basic modifications, we arrive at
+
+[Listing 3](counting_sort_rec_sk.c):
+
+```c
+void counting_sort_rec_sk(struct sortrec *arr, struct sortrec *aux, size_t n)
+{
+	size_t cnt[256] = { 0 };
+	size_t i;
+
+	// Count number of occurences of each key.
+	for (i = 0 ; i < n ; ++i) {
+		uint8_t k = key_of(arr + i);
+		cnt[k]++;
+	}
+
+	// Calculate prefix sums.
+	size_t a = 0;
+	for (int j = 0 ; j < 256 ; ++j) {
+		size_t b = cnt[j];
+		cnt[j] = a;
+		a += b;
+	}
+
+	// Sort elements
+	for (i = 0 ; i < n ; ++i) {
+		// Get the key for the current entry.
+		uint8_t k = key_of(arr + i);
+		size_t dst = cnt[k];
+		aux[dst] = arr[i];
+		cnt[k]++;
+	}
+}
+```
+
+We are now sorting an array of `struct sortrec`, not an array of octets.
+
+The primary modification in the sorting function is the use of a function `key_of()`, which returns
+the key for a given record. The main insight you should take away from this is that if the things we're sorting,
+the _entries_, aren't _themselves the keys_, we just need some way to _derive_ a key from an entry.
+
+We still use a single octet as the key inside the `struct sortrec`, but associated with each key
+is a short string. This allows us to demonstrate *a)* that sorting entries with associated data is not a problem,
+and *b)* that the sort is indeed stable.
+
+Running the full program demonstrates that each _like-key_ is output in the same order it came in the
+input array, i.e the sort is _stable_.
+
+```console
+$ ./counting_sort_rec_sk
+00000000: 01 -> 1
+00000001: 02 -> 2
+00000002: 03 -> 3
+00000003: 2d -> 1st 45
+00000004: 2d -> 2nd 45
+00000005: 2d -> 3rd 45
+00000006: ff -> 1st 255
+00000007: ff -> 2nd 255
+```
 
 ## All together now; Radix sort
 
