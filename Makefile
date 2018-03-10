@@ -14,7 +14,7 @@ endif
 
 .PHONY: genkeys clean
 
-all: radix counting_sort counting_sort_8s genkeys
+all: radix counting_sort counting_sort_8s counting_sort_rec_sk genkeys
 
 test:
 	${TEST_PREFIX} ./radix $N
@@ -23,6 +23,9 @@ counting_sort: counting_sort.c
 	$(CC) $(CFLAGS) $< -o $@
 
 counting_sort_8s: counting_sort_8s.c
+	$(CC) $(CFLAGS) $< -o $@
+
+counting_sort_rec_sk: counting_sort_rec_sk.c
 	$(CC) $(CFLAGS) $< -o $@
 
 radix: radix.cpp
