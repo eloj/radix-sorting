@@ -15,6 +15,8 @@ This code can sort 40 million 32-bit integers in under half a second using a sin
 core of an [Intel i5-3570T](https://ark.intel.com/products/65521/Intel-Core-i5-3570T-Processor-6M-Cache-up-to-3_30-GHz), a low-TDP CPU from 2012
 using DDR3-1333.
 
+Unless otherwise specified, this code is written foremost to be clear and easy to understand.
+
 ## Background
 
 _TODO_
@@ -51,17 +53,70 @@ of this counting sort become fairly obvious; you need a location to store the co
 integer. For 8- and 16-bit numbers this would amount to `2^8*4`=1KiB and `2^16*4`=256KiB of memory. For
 32-bit integers, it'd require `2^32*4`=16GiB of memory. Multiply by two if you need 64- instead of 32-bit counters.
 
-As the wikipedia page explains, it's really the range of the values involved that matters, not the magnitude. Some
-implementations can be seen scanning the input data to determine a base from the smallest value, and allocate just
-enough entries to fit `max(entry) - min(entry) + 1` values. However, if you do this you will most likely have to
+As the wikipedia page explains, it's really the range of the keys involved that matters, not the magnitude. Some
+implementations can be seen scanning the input data to determine a base from the smallest key, and allocate just
+enough entries to fit `max(k) - min(k) + 1` keys. However, if you do this you will most likely have to
 consider what to do if the input range is too wide to handle, which is not a good position to be in. In practice
 you would _never_ want to fail on some inputs, which makes this sort of implementation not very useful.
 
 As presented, this counting sort is _in-place_, but since -- in addition to not comparing elements -- it's not moving
 any elements either, it doesn't really make sense to think of it as being _stable_ or  _unstable_.
 
-To get us closeer to radix sorting, we need to consider a slightly more general variant where we're "rearranging"
-input elements. This can give us a stable sort.
+To get us closer to radix sorting, we now need to consider a slightly more general variant where we're "rearranging"
+input elements:
+
+```c
+void counting_sort_8s(uint8_t *arr, uint8_t *aux, size_t n)
+{
+	size_t cnt[256] = { 0 };
+	size_t i;
+
+	// Count number of occurences of each octet.
+	for (i = 0 ; i < n ; ++i) {
+		cnt[arr[i]]++;
+	}
+
+	// Calculate prefix sums.
+	size_t a = 0;
+	for (int j = 0 ; j < 256 ; ++j) {
+		size_t b = cnt[j];
+		cnt[j] = a;
+		a += b;
+	}
+
+	// Sort elements
+	for (i = 0 ; i < n ; ++i) {
+		// Get the key for the current entry.
+		uint8_t k = arr[i];
+		// Find the location this entry goes into in the output array.
+		size_t dst = cnt[k];
+		// Copy the current entry into the right place.
+		aux[dst] = arr[i];
+		// Make it so that the next 'k' will be written after this one.
+		// Since we process source entries in increasing order, this makes us a stable sort.
+		cnt[k]++;
+	}
+}
+```
+
+We have introduced a separate output array, which means we are no longer _in-place_. This auxillary
+array is required; the algorithm would break if we tried to write directly into the input array.
+
+However, the _main_ difference between this and the first variant is that we're no longer directly writing the
+output from the counts. Instead the counts are re-processed into a series of prefix sums in the
+second loop. This gives us the first location in the sorted output array for each input value.
+
+For instance, `cnt[0]` will always be zero, because the first `0` will always end up in the first
+position in the output. `cnt[1]` will contain how many zeroes preceed the first `1`, `cnt[2]` will
+contain how many zeroes _and_ ones preceed the first `2`, and so on.
+
+In the sorting loop, we look up the output location for the key of the current entry, and write the
+entry there. We then increase the count of the prefix sum by one, which guarantees that the next same-keyed entry
+is written just after this one.
+
+Because we are processing the input entries in order, from the lowest to the highest index, and preserving
+this order when we write them out, this sort is in essence stable. That said, it's a bit of a pointless distinction
+since we're treating each input entry, as a whole, as the key.
 
 ## All together now; Radix sort
 

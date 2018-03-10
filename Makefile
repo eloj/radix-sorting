@@ -14,12 +14,15 @@ endif
 
 .PHONY: genkeys clean
 
-all: radix counting_sort genkeys
+all: radix counting_sort counting_sort_8s genkeys
 
 test:
 	${TEST_PREFIX} ./radix $N
 
 counting_sort: counting_sort.c
+	$(CC) $(CFLAGS) $< -o $@
+
+counting_sort_8s: counting_sort_8s.c
 	$(CC) $(CFLAGS) $< -o $@
 
 radix: radix.cpp
