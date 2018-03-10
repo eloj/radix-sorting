@@ -21,7 +21,7 @@ _TODO_
 
 ## From the top; Counting sort
 
-The simplest way to sort an array of integers, without comparisons, is to simply count
+The simplest way to sort an array of integers, without comparing elements, is to simply count
 how many there are of each unique integer, and use those counts to write the result.
 
 This is the most basic [counting sort](https://en.wikipedia.org/wiki/Counting_sort).
@@ -47,13 +47,21 @@ void counting_sort_8(uint8_t *arr, size_t n)
 ```
 
 You could easily extend this code to work with 16-bit values, but if you try to push much further the drawbacks
-of a _general_ counting sort become fairly obvious; you need a location (_bucket_) to store the count for each unique
+of this counting sort become fairly obvious; you need a location to store the count for each unique
 integer. For 8- and 16-bit numbers this would amount to `2^8*4`=1KiB and `2^16*4`=256KiB of memory. For
-32-bit integers, it'd require `2^32*4`=16GiB of memory.
+32-bit integers, it'd require `2^32*4`=16GiB of memory. Multiply by two if you need 64- instead of 32-bit counters.
 
-## Step two; Histogram sort
+As the wikipedia page explains, it's really the range of the values involved that matters, not the magnitude. Some
+implementations can be seen scanning the input data to determine a base from the smallest value, and allocate just
+enough entries to fit `max(entry) - min(entry) + 1` values. However, if you do this you will most likely have to
+consider what to do if the input range is too wide to handle, which is not a good position to be in. In practice
+you would _never_ want to fail on some inputs, which makes this sort of implementation not very useful.
 
-_TODO_
+As presented, this counting sort is _in-place_, but since -- in addition to not comparing elements -- it's not moving
+any elements either, it doesn't really make sense to think of it as being _stable_ or  _unstable_.
+
+To get us closeer to radix sorting, we need to consider a slightly more general variant where we're "rearranging"
+input elements. This can give us a stable sort.
 
 ## All together now; Radix sort
 
