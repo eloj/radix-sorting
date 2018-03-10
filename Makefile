@@ -37,4 +37,4 @@ genkeys: 40M_32bit_keys.dat
 	dd if=/dev/urandom bs=1024 count=156250 of=$@
 
 clean:
-	rm -f radix counting_sort core.*
+	rm -f radix counting_sort_8 counting_sort_8s counting_sort_rec_sk core.*
