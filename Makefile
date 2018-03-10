@@ -14,12 +14,12 @@ endif
 
 .PHONY: genkeys clean
 
-all: radix counting_sort counting_sort_8s counting_sort_rec_sk genkeys
+all: radix counting_sort_8 counting_sort_8s counting_sort_rec_sk genkeys
 
 test:
 	${TEST_PREFIX} ./radix $N
 
-counting_sort: counting_sort.c
+counting_sort_8: counting_sort_8.c
 	$(CC) $(CFLAGS) $< -o $@
 
 counting_sort_8s: counting_sort_8s.c
