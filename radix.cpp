@@ -13,22 +13,6 @@
 
 #define RESTRICT __restrict__
 
-/*
-	'isort3'; J.L Bentley, "Programming Pearls", column 11.1, page 116.
-*/
-template<typename T>
-static void
-insert_sort(T *arr, size_t n) {
-	T x;
-	size_t j;
-	for (size_t i = 1 ; i < n ; ++i) {
-		x = arr[i];
-		for (j = i ; j > 0 && arr[j-1] > x ; --j)
-			arr[j] = arr[j-1];
-		arr[j] = x;
-	}
-}
-
 void timespec_diff(struct timespec *start, struct timespec *stop,
 				struct timespec *result)
 {
@@ -225,19 +209,8 @@ int main(int argc, char *argv[])
 	struct timespec tp_start;
 	struct timespec tp_end;
 
-	printf("Running algorithm '%d'\n", alg);
 	clock_gettime(CLOCK_MONOTONIC_RAW, &tp_start);
-	switch (alg) {
-		case 0:
-			test_radix_sort(src, n);
-			break;
-		case 1:
-			test_insert_sort(src, n);
-			break;
-		default:
-			fprintf(stderr, "Unknown algorithm picked, %d\n", alg);
-			break;
-	}
+	test_radix_sort(src, n);
 	clock_gettime(CLOCK_MONOTONIC_RAW, &tp_end);
 
 #ifdef VERIFY_SORT
