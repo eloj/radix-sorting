@@ -214,13 +214,9 @@ one above the next in binary, or more conveniently, hexadecimal:
  | B2667C54   | B2 | 66 | 7C | 54 |
  | 8C8E59A6   | 8C | 8E | 59 | A6 |
 
-In our counting sorts, the key width and the radix (or column) width were the same; 8-bits.
-In a radix sort the column width will be less than the key width, but we'll be forced to
-make multiple passes over the keys to make up the difference.
-
 If you consider the table of random 32-bit keys above, with the four 8-bit wide columns marked
 *A* through *D*, there's a choice to be made; if we're going to process these keys one column
-at a time, in which order do we process the columns?
+at a time, _in which order do we process the columns_?
 
 You may have been waiting for me to mention the two main paths available when implementing
 a radix sort; _Least Significant Bit_ (LSB) or _Most Significant Bit_ (MSB) first.
@@ -228,18 +224,130 @@ a radix sort; _Least Significant Bit_ (LSB) or _Most Significant Bit_ (MSB) firs
 If you have prior experience you may already know that, based on the material presented so far,
 we're going down the LSB path, meaning we'll process the columns from right to left; D, C, B, A.
 
+In our counting sorts, the key width and the radix (or column) width were the same; 8-bits.
+In a radix sort the column width will be less or equal to the key width, and in a LSB radix sort
+we'll be forced to make multiple passes over the input to make up the difference. The wider
+our radix, the more memory but fewer passes we'll need. This is the tradeoff.
+
 The assertion then, and we will demonstrate this to be true, is that if we apply counting sort
-by column D, and then apply counting sort on that result by column C, and so forth, after the last
-column (A) is processed, our data will be sorted and this sort is stable.
+by column *D*, and then apply counting sort on that result by column *C*, and so forth, after the last
+column (*A*) is processed, our data will be sorted and this sort is stable.
 
 [Listing 3](radix_sort_u32.c):
 
 ```c
-TODO
+void radix_sort_u32(struct sortrec *arr, struct sortrec *aux, size_t n)
+{
+	size_t cnt0[256] = { 0 };
+	size_t cnt1[256] = { 0 };
+	size_t cnt2[256] = { 0 };
+	size_t cnt3[256] = { 0 };
+	size_t i;
+
+	// Generate histograms
+	for (i = 0 ; i < n ; ++i) {
+		uint32_t k = key_of(arr + i);
+
+		uint8_t k0 = (k >> 0) & 0xFF;
+		uint8_t k1 = (k >> 8) & 0xFF;
+		uint8_t k2 = (k >> 16) & 0xFF;
+		uint8_t k3 = (k >> 24) & 0xFF;
+
+		cnt0[k0]++;
+		cnt1[k1]++;
+		cnt2[k2]++;
+		cnt3[k3]++;
+	}
+
+	// Calculate prefix sums.
+	size_t a0 = 0;
+	size_t a1 = 0;
+	size_t a2 = 0;
+	size_t a3 = 0;
+	for (int j = 0 ; j < 256 ; ++j) {
+		size_t b0 = cnt0[j];
+		size_t b1 = cnt1[j];
+		size_t b2 = cnt2[j];
+		size_t b3 = cnt3[j];
+		cnt0[j] = a0;
+		cnt1[j] = a1;
+		cnt2[j] = a2;
+		cnt3[j] = a3;
+		a0 += b0;
+		a1 += b1;
+		a2 += b2;
+		a3 += b3;
+	}
+
+	// Sort in four passes from LSB to MSB
+	for (i = 0 ; i < n ; ++i) {
+		uint32_t k = key_of(arr + i);
+		uint8_t k0 = (k >> 0) & 0xFF;
+		size_t dst = cnt0[k0]++;
+		aux[dst] = arr[i];
+	}
+	SWAP(arr, aux);
+
+	for (i = 0 ; i < n ; ++i) {
+		uint32_t k = key_of(arr + i);
+		uint8_t k1 = (k >> 8) & 0xFF;
+		size_t dst = cnt1[k1]++;
+		aux[dst] = arr[i];
+	}
+	SWAP(arr, aux);
+
+	for (i = 0 ; i < n ; ++i) {
+		uint32_t k = key_of(arr + i);
+		uint8_t k2 = (k >> 16) & 0xFF;
+		size_t dst = cnt2[k2]++;
+		aux[dst] = arr[i];
+	}
+	SWAP(arr, aux);
+
+	for (i = 0 ; i < n ; ++i) {
+		uint32_t k = key_of(arr + i);
+		uint8_t k3 = (k >> 24) & 0xFF;
+		size_t dst = cnt3[k3]++;
+		aux[dst] = arr[i];
+	}
+}
 ```
 
+The function `radix_sort_u32()` builds on `counting_sort_rec_sk()` in a straight-forward manner
+by introducing four counting sort passes.
 
-## TODO
+First four histograms are generated in one pass through the input. These are re-processed into prefix sums
+in a separate pass. We then sort columns *D* through *A*, swapping (a.k.a ping-ponging) the
+input and output buffer between the passes.
 
+After the 4:th (final) sorting pass, since this is an even number, the final result is available
+in the input buffer.
+
+## Key derivation; Sort order and floats
+
+_TODO_
+
+## Optimizations
+
+_TODO_
+
+* Sorted detection.
+* Column skipping.
 * Very suspectible to compiler optimization (check << 3 vs * 8 again), GCC7.3 vs GCC5...
-* Not going over asymptotics, but mention latency. Hybrid sorting.
+
+## C++ Implementation
+
+_TODO_
+
+[radix.cpp](radix.cpp)
+
+## MSB - The other path
+
+_TODO_
+
+## Miscellaneous
+
+* Not going over asymptotics, but mention latency.
+* Alternative column widths.
+* Hybrid sorting.
+
