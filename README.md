@@ -183,9 +183,61 @@ $ ./counting_sort_rec_sk
 00000007: ff -> 2nd 255
 ```
 
+Now we are ready to take the step from counting sorts to radix sorts.
+
 ## All together now; Radix sort
 
-_TODO_
+_NOTE: Very much work in progress._
+
+A radix sort works by looking at some portion of a key, sorting all entries based on
+that portion, then taking another pass and look at the next portion, and so on until
+the whole of the keys, or as much as is necessary, has been processed.
+
+Some texts describe this as looking at the individual digits of a base-10 integer key,
+separating each digit by taking the key modulo 10, and then dividing by 10 to get to the
+next digit. Each digit is then the _radix_, the portion of the key we're sorting on.
+
+In a computer we deal with bits. So instead of division and modulo, we use bit-shifts
+and bit-masking, and we consider the key primarily as a bitstring, not a number _per se_.
+
+The _radix_ forms a column down through the keys to be sorted, were they written out
+one above the next in binary, or more conveniently, hexadecimal:
+
+ | 32-bit key | A  | B  | C  | D  |
+ | :--------- | -- | -- | -- | -- |
+ | 7A8F97A4   | 7A | 8F | 97 | A4 |
+ | F728B2E2   | F7 | 28 | B2 | E2 |
+ | 517833CD   | 51 | 78 | 33 | CD |
+ | 9332B72F   | 93 | 32 | B7 | 2F |
+ | A35138CD   | A3 | 51 | 38 | CD |
+ | BBAD9DAF   | BB | AD | 9D | AF |
+ | B2667C54   | B2 | 66 | 7C | 54 |
+ | 8C8E59A6   | 8C | 8E | 59 | A6 |
+
+In our counting sorts, the key width and the radix (or column) width were the same; 8-bits.
+In a radix sort the column width will be less than the key width, but we'll be forced to
+make multiple passes over the keys to make up the difference.
+
+If you consider the table of random 32-bit keys above, with the four 8-bit wide columns marked
+*A* through *D*, there's a choice to be made; if we're going to process these keys one column
+at a time, in which order do we process the columns?
+
+You may have been waiting for me to mention the two main paths available when implementing
+a radix sort; _Least Significant Bit_ (LSB) or _Most Significant Bit_ (MSB) first.
+
+If you have prior experience you may already know that, based on the material presented so far,
+we're going down the LSB path, meaning we'll process the columns from right to left; D, C, B, A.
+
+The assertion then, and we will demonstrate this to be true, is that if we apply counting sort
+by column D, and then apply counting sort on that result by column C, and so forth, after the last
+column (A) is processed, our data will be sorted and this sort is stable.
+
+[Listing 3](radix_sort_u32.c):
+
+```c
+TODO
+```
+
 
 ## TODO
 
