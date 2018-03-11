@@ -14,7 +14,7 @@ endif
 
 .PHONY: genkeys clean
 
-all: radix counting_sort_8 counting_sort_8s counting_sort_rec_sk genkeys
+all: radix counting_sort_8 counting_sort_8s counting_sort_rec_sk radix_sort_u32 genkeys
 
 test:
 	${TEST_PREFIX} ./radix $N
@@ -28,6 +28,9 @@ counting_sort_8s: counting_sort_8s.c
 counting_sort_rec_sk: counting_sort_rec_sk.c
 	$(CC) $(CFLAGS) $< -o $@
 
+radix_sort_u32: radix_sort_u32.c
+	$(CC) $(CFLAGS) $< -o $@
+
 radix: radix.cpp
 	$(CXX) $(CXXFLAGS) -DVERIFY_SORT radix.cpp -o $@
 
@@ -37,4 +40,4 @@ genkeys: 40M_32bit_keys.dat
 	dd if=/dev/urandom bs=1024 count=156250 of=$@
 
 clean:
-	rm -f radix counting_sort_8 counting_sort_8s counting_sort_rec_sk core.*
+	rm -f radix counting_sort_8 counting_sort_8s counting_sort_rec_sk radix_sort_u32 core.*
