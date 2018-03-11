@@ -317,7 +317,7 @@ void radix_sort_u32(struct sortrec *arr, struct sortrec *aux, size_t n)
 The function `radix_sort_u32()` builds on `counting_sort_rec_sk()` in a straight-forward manner
 by introducing four counting sort passes.
 
-First four histograms are generated in one pass through the input. These are re-processed into prefix sums
+The four histograms are generated in one pass through the input. These are re-processed into prefix sums
 in a separate pass. We then sort columns *D* through *A*, swapping (a.k.a ping-ponging) the
 input and output buffer between the passes.
 
@@ -332,15 +332,15 @@ we want to sort in descending order?
 
 First off, for a LSB radix sort, the keys really need to be the same width,
 and narrower is better to keep the number of passes down. This means that
-it's not very useful if the key is a character string of any significant
+an LSB implementtion is not well suited to sort character strings of any significant
 length. For those, a MSB radix sort is better.
 
-For sorting floats or other fixed-width keys, or changing the sort order, we can still
-use the LSB implementation as is. The trick is to map the bit-patterns of the key
+For sorting floats, doubles or other fixed-width keys, or changing the sort order,
+we can still use the LSB implementation as is. The trick is to map the bit-patterns of the key
 we have onto the unsigned integers.
 
-For instance, if we want to sort unsigned integers in _descending_ order, simply have
-the key-derivation function return the bitwise inverse of the key.
+If we want to sort unsigned integers in _descending_ order, have the key-derivation
+function return the bitwise inverse of the key:
 
 ```c
 	return ~key; // unsigned (desc)
@@ -360,13 +360,22 @@ These can be combined to handle signed integers in descending order:
 	return ~(key ^ 0x80000000); // signed 32-bit (desc)
 ```
 
-To sort floats in their natural order we need to invert the key if the sign-bit is set, else we need to flip the sign bit:
+To sort IEEE 754 single-precision (32-bit) floats (a.k.a _binary32_) in their natural order we need to invert the key if the sign-bit is set, else we need to flip the sign bit. (via [Radix Tricks](http://stereopsis.com/radix.html)):
 
 ```c
 	return key ^ (-((uint32_t)key >> 31) | 0x80000000); // 32-bit float
 ```
 
 These of course extends naturally to 64-bit keys also.
+
+For very specific sorts, where performance is of the outmost importance, it's certainly
+possible the change the underlying code instead of manipulating the key. You can reverse
+the sort-order by reversing the prefix sum, or simply reading the final result backwards
+if possible.
+
+The 2000-era [Radix Sort Revisited](http://codercorner.com/RadixSortRevisited.htm) presents
+a more direct way to change the code to handle floats.
+
 
 ## Optimizations
 
@@ -391,4 +400,9 @@ _TODO_
 * Not going over asymptotics, but mention latency.
 * Alternative column widths.
 * Hybrid sorting.
+
+## Resources
+
+* Pierre Terdiman, "[Radix Sort Revisited](http://codercorner.com/RadixSortRevisited.htm)", 2000.
+* Michael Herf, "[Radix Tricks](http://stereopsis.com/radix.html), 2001.
 
