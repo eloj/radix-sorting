@@ -379,11 +379,57 @@ a more direct way to change the code to handle floats.
 
 ## Optimizations
 
-_TODO_
+### Pre-sorted detection
 
-* Sorted detection.
-* Column skipping.
-* Very suspectible to compiler optimization (check << 3 vs * 8 again), GCC7.3 vs GCC5...
+Since we have to scan once through the input to build our histograms, it's
+relatively easy to add code there to detect if the input is already sorted/reverse-sorted,
+and special case that.
+
+One way to implement it is to initialize a variable to the number of elements
+to be sorted, and decrement it every time the current element is _less-than-or-equal_
+to the next one, care of bounds. After a pass through the input, you would have
+a count of the number of elements that need to be sorted. If this number is less
+than two, you're done.
+
+If there's a user-defined key-derivation function this is probably not worth trying.
+
+Pushing further, say trying to detect already sorted columns, didn't seem worth the
+effort in my experiments. You don't want to add too many conditionals to the
+histogram loop.
+
+### Column skipping
+
+If every radix for a column is the same, then the sort loop for that column will
+simply be a copy from one buffer to another, which is a waste.
+
+Fortunately detecting this is very easy, you don't even have to scan through the
+histograms. Simply sample the key of the first element. If any of its radixes has
+a histogram count equal to the total number of entries to sort, that column can be
+skipped.
+
+```c
+	int cols[4];
+	int ncols = 0;
+	uint32_t key0 = key_of(*src); // sample first entry
+	uint8_t k0 = (key0 >> 0);
+	uint8_t k1 = (key0 >> 8);
+	[...]
+	if (cnt0[k0] != num_entries)
+		cols[ncols++] = 0;
+	if (cnt1[k1] != num_entries)
+		cols[ncols++] = 1;
+	[...]
+	// .. here the cols array contains the index of the ncols columns we must process.
+```
+
+Skipping columns has the side-effect of the final sorted result ending up in either the
+original input buffer or the auxillary buffer, depending on whether you sorted an even
+or odd number of columns. I prefer to have the sort function return the pointer
+to the result, rather than add a copy step.
+
+### Compiler issues
+
+_TODO_: Very suspectible to compiler optimization (check << 3 vs * 8 again), GCC7.3 vs GCC5...
 
 ## C++ Implementation
 
