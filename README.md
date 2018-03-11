@@ -3,7 +3,8 @@
 
 _TODO: These notes (and code) are incomplete. My goal is to eventually provide a step-by-step
 guide and introduction to a very simple radix sort implementation, and try to cover
-the basic issues which are sometimes glossed over in text books and courses_
+the basic issues which are sometimes glossed over in text books and courses.
+Furthermore, WHILE THIS NOTE PERSISTS, I MAY FORCE PUSH TO MASTER_
 
 These are my notes on engineering a [radix sort](https://en.wikipedia.org/wiki/Radix_sort).
 
