@@ -254,10 +254,10 @@ void radix_sort_u32(struct sortrec *arr, struct sortrec *aux, size_t n)
 		uint8_t k2 = (k >> 16) & 0xFF;
 		uint8_t k3 = (k >> 24) & 0xFF;
 
-		cnt0[k0]++;
-		cnt1[k1]++;
-		cnt2[k2]++;
-		cnt3[k3]++;
+		++cnt0[k0];
+		++cnt1[k1];
+		++cnt2[k2];
+		++cnt3[k3];
 	}
 
 	// Calculate prefix sums.
