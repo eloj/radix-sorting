@@ -199,7 +199,7 @@ separating each digit by taking the key modulo 10, and then dividing by 10 to ge
 next digit. Each digit is then the _radix_, the portion of the key we're sorting on.
 
 In a computer we deal with bits. So instead of division and modulo, we use bit-shifts
-and bit-masking, and we consider the key primarily as a bitstring, not a number _per se_.
+and bit-masking, and conceptually we consider the key as a bitstring, not a number _per se_.
 
 The _radix_ forms a column down through the keys to be sorted, were they written out
 one above the next in binary, or more conveniently, hexadecimal:
@@ -326,7 +326,47 @@ in the input buffer.
 
 ## Key derivation; Sort order and floats
 
-_TODO_
+So far we have been using an unsigned integer as the key, which we've sorted
+in ascending order. What if key we want to sort on is some other type, or if
+we want to sort in descending order?
+
+First off, for a LSB radix sort, the keys really need to be the same width,
+and narrower is better to keep the number of passes down. This means that
+it's not very useful if the key is a character string of any significant
+length. For those, a MSB radix sort is better.
+
+For sorting floats or other fixed-width keys, or changing the sort order, we can still
+use the LSB implementation as is. The trick is to map the bit-patterns of the key
+we have onto the unsigned integers.
+
+For instance, if we want to sort unsigned integers in _descending_ order, simply have
+the key-derivation function return the bitwise inverse of the key.
+
+```c
+	return ~key; // unsigned (desc)
+```
+
+To treat the key as a signed integer, we need to manipulate the sign-bit,
+since by default this is set for negative numbers, meaning they will appear
+at the end of the result.
+
+```c
+	return key ^ 0x80000000; // signed 32-bit (asc)
+```
+
+These can be combined to handle signed integers in descending order:
+
+```c
+	return ~(key ^ 0x80000000); // signed 32-bit (desc)
+```
+
+To sort floats in their natural order we need to invert the key if the sign-bit is set, else we need to flip the sign bit:
+
+```c
+	return key ^ (-((uint32_t)key >> 31) | 0x80000000); // 32-bit float
+```
+
+These of course extends naturally to 64-bit keys also.
 
 ## Optimizations
 
