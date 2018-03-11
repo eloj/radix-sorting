@@ -379,6 +379,25 @@ a more direct way to change the code to handle floats.
 
 ## Optimizations
 
+_TODO: This section very much a work in progress/TBD thing_
+
+In this section I'll talk about some optimizations that I have tried, or
+that may be worth investigating.
+
+### Hybrids
+
+I have observed a few different radix sort implementations, and some of them have
+a larger _latency_ than others. What I mean by that is that there's a certain
+fixed overhead for calling the function even if you are sorting very few entries.
+
+This gives rise to the idea of hybrid sorts, where you redirect small workloads
+(e.g N < 100) to say an _insertion sort_. This is often a part of MSB radix sorts.
+
+It's also possible to do one MSB pass and then LSB sort the sub-results. This saves
+memory and memory management from doing all MSB passes, and should improve cache
+locality for the LSB passes. That said, in the one implementation I've tried, the
+latency was quite high. (_TODO: determine exact reason_)
+
 ### Pre-sorted detection
 
 Since we have to scan once through the input to build our histograms, it's
@@ -427,6 +446,35 @@ original input buffer or the auxillary buffer, depending on whether you sorted a
 or odd number of columns. I prefer to have the sort function return the pointer
 to the result, rather than add a copy step.
 
+### Prefetching
+
+Working primarily on IA-32 and AMD64/x86-64 CPUs, I've never had a good experience with
+adding manual prefetching (i.e `__builtin_prefetch`).
+
+[Michael Herf](http://stereopsis.com/radix.html) reports a "25% speedup" from adding `_mm_prefetch` calls
+to his code that was running on a Pentium 3.
+
+I'll put this in the *TBD* column for now.
+
+### Vectorized histogramming
+
+The vector instructions afforded by x86-64 (SSE, AVX, AVX2) does not seem to provide a path
+to a vectorized implementation that is worth it in practice. The issue seems to be poor
+gather/scatter support. I'm looking forward to be proven wrong about this in the future.
+
+For other architectures this may be more viable.
+
+### Wider or narrower radix
+
+Using multiples of eight bits for the radix is convenient, but not required. If we do,
+we limit ourselves to 8-bit or 16-bit wide radixes in practice. Using an intermediate size such as 11-bits
+with three passes saves us one pass for every 32-bits of key, but also makes it less likely
+for the column skipping to kick in and may add some masking operations.
+
+Going narrower could allow us to skip more columns in common workloads. There's definitely
+room for experimentation in this area, maybe even trying non-uniformly wide radixes (8-16-8) or
+dynamic selection of radix widths.
+
 ### Compiler issues
 
 _TODO_: Very suspectible to compiler optimization (check << 3 vs * 8 again), GCC7.3 vs GCC5...
@@ -444,7 +492,6 @@ _TODO_
 ## Miscellaneous
 
 * Not going over asymptotics, but mention latency.
-* Alternative column widths.
 * Hybrid sorting.
 
 ## Resources
