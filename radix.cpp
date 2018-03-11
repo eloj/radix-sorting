@@ -181,10 +181,9 @@ static void* read_file(const char *filename, size_t *limit) {
 int main(int argc, char *argv[])
 {
 	int entries = argc > 1 ? atoi(argv[1]) : 0;
-	int alg = argc > 2 ? atoi(argv[2]) : 0;
 	const char *src_fn = "40M_32bit_keys.dat";
 
-	printf("alg=%d, entries=%d, src='%s'\n", alg, entries, src_fn);
+	printf("entries=%d, src='%s'\n", entries, src_fn);
 
 	size_t bytes = 4*entries;
 	uint32_t *src = (uint32_t*)read_file(src_fn, &bytes);
@@ -211,6 +210,11 @@ int main(int argc, char *argv[])
 
 	clock_gettime(CLOCK_MONOTONIC_RAW, &tp_start);
 	test_radix_sort(src, n);
+#if 0
+	std::sort(src, src + n, [](const uint32_t a, const uint32_t b) __attribute__((pure, hot)) {
+		return a < b;
+	});
+#endif
 	clock_gettime(CLOCK_MONOTONIC_RAW, &tp_end);
 
 #ifdef VERIFY_SORT
