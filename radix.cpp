@@ -3,6 +3,7 @@
 #include <cstring>
 #include <cinttypes>
 #include <ctime>
+#include <cmath>
 #include <cassert>
 #include <algorithm>
 
@@ -28,8 +29,9 @@ void timespec_diff(struct timespec *start, struct timespec *stop,
 template <typename T>
 void print_sort(T *keys, size_t n) {
 	for (size_t i = 0 ; i < n ; ++i) {
-		printf("%04zu: %08x int:%d", i, (uint32_t)keys[i], (int32_t)keys[i]);
-		// printf("float:%f ", *(reinterpret_cast<float*>(keys + i)));
+		printf("%08zu: %08x", i, (uint32_t)keys[i]);
+		// printf(" int:%d", (int32_t)keys[i]);
+		// printf(" float:%f ", *(reinterpret_cast<float*>(keys + i)));
 		printf("\n");
 	}
 }
@@ -124,12 +126,6 @@ T* radix_sort(T * RESTRICT src, T * RESTRICT aux, size_t n, KeyFunc kf) {
 }
 
 template <typename T>
-int test_insert_sort(T* src, size_t n) {
-	insert_sort(src, n);
-	return 0;
-}
-
-template <typename T>
 int test_radix_sort(T* src, size_t n) {
 	T *aux = new T[n];
 
@@ -200,7 +196,7 @@ int main(int argc, char *argv[])
 
 #if 0
 	// Small test for floats. Note that underlying type should remain uintXX_t, hence copy
-	float f[] = { 128.0f, 646464.0f, 0.0f, -0.0f, -0.5f, 0.5f, -128.0f };
+	float f[] = { 128.0f, 646464.0f, 0.0f, -0.0f, -0.5f, 0.5f, -128.0f, -INFINITY, NAN, INFINITY};
 	memcpy(src, f, sizeof(f));
 	n = sizeof(f)/sizeof(f[0]);
 #endif
