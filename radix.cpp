@@ -10,7 +10,7 @@
 #include <sys/mman.h> // for mmap
 
 /*
-	TODO: counting sort for 8 and 16-bit integers.
+	TODO: mmap support is half-broken as it's not applied to aux buffer.
 	TODO: static error if called on unsupported type.
 */
 
@@ -38,11 +38,11 @@ void print_sort(T *keys, size_t n) {
 	}
 }
 
-template <typename T>
-size_t verify_sort(T *keys, size_t n) {
+template <typename T, typename KeyFunc>
+size_t verify_sort_kf(T *keys, size_t n, KeyFunc kf) {
 	printf("Verifying sort... ");
 	for (size_t i = 1 ; i < n ; ++i) {
-		if (keys[i-1] > keys[i]) {
+		if (kf(keys[i-1]) > kf(keys[i])) {
 			printf("Sort if array at %p invalid.\n", keys);
 			printf("%zu: %" PRIx64 " > ", i-1, (uint64_t)keys[i-1]);
 			printf("%zu: %" PRIx64 "\n", i, (uint64_t)keys[i]);
@@ -66,12 +66,12 @@ T* radix_sort(T * RESTRICT src, T * RESTRICT aux, size_t n, KeyFunc kf) {
 
 //	printf("wc=%d\n", wc);
 
-// size_t n_unsorted = n;
+	size_t n_unsorted = n;
 
 	// Histograms
 	for (size_t i = 0 ; i < n ; ++i) {
-#if 0
-		// pre-sorted detection disabled, since it requires knowledge of sort-order
+#if 1
+		// pre-sorted detection
 		if ((i < n - 1) && (kf(src[i]) <= kf(src[i+1]))) {
 			--n_unsorted;
 		}
@@ -81,8 +81,8 @@ T* radix_sort(T * RESTRICT src, T * RESTRICT aux, size_t n, KeyFunc kf) {
 		}
 	}
 
-#if 0
-//	printf("n_unsorted=%zu\n", n_unsorted);
+#if 1
+	// printf("n_unsorted=%zu\n", n_unsorted);
 	if (n_unsorted < 2)
 		return src;
 #endif
@@ -128,16 +128,25 @@ T* radix_sort(T * RESTRICT src, T * RESTRICT aux, size_t n, KeyFunc kf) {
 }
 
 template <typename T>
-int test_radix_sort(T* src, size_t n) {
-	T *aux = new T[n];
+int test_radix_sort(T* src, size_t n, struct timespec *tp_start, struct timespec *tp_end) {
+	if (tp_start)
+		clock_gettime(CLOCK_MONOTONIC_RAW, tp_start);
 
-	auto *sorted = radix_sort(src, aux, n, [](const T& entry) __attribute__((pure, hot)) {
+	T *aux = new T[n];
+#if 0
+	int flags = MAP_HUGETLB | MAP_NORESERVE; // | MAP_HUGE_2MB; // MAP_NORESERVE
+	T *aux = (T*)mmap(NULL, n*4, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS | flags, -1, 0);
+#endif
+
+	auto key_df = [](const T& entry) __attribute__((pure, hot)) {
 		return entry;  // unsigned (asc)
 		// return ~entry; // unsigned (desc)
 		// return entry ^ 0x80000000; // signed (asc)
 		// return ~(entry ^ 0x80000000); // signed (desc)
 		// return entry ^ (-((uint32_t)entry >> 31) | 0x80000000); // float (if sign-bit; invert, else flip sign-bit)
-	});
+	};
+
+	auto *sorted = radix_sort(src, aux, n, key_df);
 
 	if (sorted == aux) {
 		printf("Copying aux buffer.\n");
@@ -145,6 +154,16 @@ int test_radix_sort(T* src, size_t n) {
 	}
 
 	delete[](aux);
+	//	munmap(aux, n*4);
+
+	if (tp_end)
+		clock_gettime(CLOCK_MONOTONIC_RAW, tp_end);
+
+#ifdef VERIFY_SORT
+	if (verify_sort_kf(src, n, key_df) != 0) {
+		return 1;
+	}
+#endif
 
 	return 0;
 }
@@ -172,7 +191,7 @@ static void* read_file(const char *filename, size_t *limit, int use_mmap) {
 			printf("Mapping memory at %p, reading %zu bytes.\n", keys, bytes);
 		} else {
 			printf("Allocating and reading %zu bytes.\n", bytes);
-			keys = malloc(bytes);
+			keys = malloc(bytes * 2);
 		}
 		long rnum = fread(keys, bytes, 1, f);
 		fclose(f);
@@ -218,19 +237,13 @@ int main(int argc, char *argv[])
 	struct timespec tp_start;
 	struct timespec tp_end;
 
-	clock_gettime(CLOCK_MONOTONIC_RAW, &tp_start);
-	test_radix_sort(src, n);
+	test_radix_sort(src, n, &tp_start, &tp_end);
 #if 0
+	clock_gettime(CLOCK_MONOTONIC_RAW, &tp_start);
 	std::sort(src, src + n, [](const uint32_t a, const uint32_t b) __attribute__((pure, hot)) {
 		return a < b;
 	});
-#endif
 	clock_gettime(CLOCK_MONOTONIC_RAW, &tp_end);
-
-#ifdef VERIFY_SORT
-	if (verify_sort(src, n) != 0) {
-		return 1;
-	}
 #endif
 
 	// Debug print some of the sorted list

@@ -431,7 +431,8 @@ to the next one, care of bounds. After a pass through the input, you would have
 a count of the number of elements that need to be sorted. If this number is less
 than two, you're done.
 
-If there's a user-defined key-derivation function this is probably not worth trying.
+If there's a user-defined key-derivation function, apply it to the values being
+compared.
 
 Pushing further, say trying to detect already sorted columns, didn't seem worth the
 effort in my experiments. You don't want to add too many conditionals to the
