@@ -7,6 +7,8 @@
 #include <cassert>
 #include <algorithm>
 
+#include <sys/mman.h> // for mmap
+
 /*
 	TODO: counting sort for 8 and 16-bit integers.
 	TODO: static error if called on unsupported type.
@@ -147,7 +149,7 @@ int test_radix_sort(T* src, size_t n) {
 	return 0;
 }
 
-static void* read_file(const char *filename, size_t *limit) {
+static void* read_file(const char *filename, size_t *limit, int use_mmap) {
 	void *keys = NULL;
 	size_t bytes = 0;
 
@@ -160,8 +162,18 @@ static void* read_file(const char *filename, size_t *limit) {
 		if (*limit > 0 && *limit < bytes)
 			bytes = *limit;
 
-		printf("Allocating and reading %zu bytes.\n", bytes);
-		keys = malloc(bytes);
+		if (use_mmap) {
+			int flags = MAP_HUGETLB | MAP_NORESERVE; // | MAP_HUGE_2MB; // MAP_NORESERVE
+			keys = mmap(NULL, bytes, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS | flags, -1, 0);
+			if (!keys || (keys == MAP_FAILED)) {
+				printf("mmap failed.\n");
+				return NULL;
+			}
+			printf("Mapping memory at %p, reading %zu bytes.\n", keys, bytes);
+		} else {
+			printf("Allocating and reading %zu bytes.\n", bytes);
+			keys = malloc(bytes);
+		}
 		long rnum = fread(keys, bytes, 1, f);
 		fclose(f);
 		if (rnum != 1) {
@@ -177,12 +189,14 @@ static void* read_file(const char *filename, size_t *limit) {
 int main(int argc, char *argv[])
 {
 	int entries = argc > 1 ? atoi(argv[1]) : 0;
+	int use_mmap = argc > 2 ? atoi(argv[2]) : 0;
 	const char *src_fn = "40M_32bit_keys.dat";
 
-	printf("entries=%d, src='%s'\n", entries, src_fn);
+	printf("src='%s', entries=%d, use_mmap=%d\n", src_fn, entries, use_mmap);
 
 	size_t bytes = 4*entries;
-	uint32_t *src = (uint32_t*)read_file(src_fn, &bytes);
+
+	uint32_t *src = (uint32_t*)read_file(src_fn, &bytes, use_mmap);
 	assert(src);
 
 	size_t n = bytes / sizeof(*src);
@@ -228,7 +242,11 @@ int main(int argc, char *argv[])
 	double time_ms = (tp_res.tv_sec * 1000) + (tp_res.tv_nsec / 1.0e6f);
 	printf("Sorted %zu entries in %.4f ms\n", n, time_ms);
 
-	free(src);
+	if (!use_mmap) {
+		free(src);
+	} else {
+		munmap(src, bytes);
+	}
 
 	return 0;
 }
