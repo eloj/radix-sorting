@@ -110,11 +110,12 @@ array is required; the algorithm would break if we tried to write directly into 
 
 However, the _main_ difference between this and the first variant is that we're no longer directly writing the
 output from the counts. Instead the counts are re-processed into a series of prefix sums in the
-second loop. This gives us the first location in the sorted output array for each input value.
+second loop. This gives us, for each input value, its first location in the sorted output array, i.e
+the value of `cnt[j]` tells us our the offset at which to write the first _j_ to the output.
 
-For instance, `cnt[0]` will always be zero, because the first `0` will always end up in the first
-position in the output. `cnt[1]` will contain how many zeroes preceed the first `1`, `cnt[2]` will
-contain how many zeroes _and_ ones preceed the first `2`, and so on.
+For instance, `cnt[0]` will always be zero, because any `0` will always end up in the first
+position in the output. `cnt[1]` will contain how many zeroes precede the first `1`, `cnt[2]` will
+contain how many zeroes _and_ ones precede the first `2`, and so on.
 
 In the sorting loop, we look up the output location for the key of the current entry, and write the
 entry there. We then increase the count of the prefix sum by one, which guarantees that the next same-keyed entry
@@ -493,6 +494,8 @@ _TODO_
 
 * Not going over asymptotics, but mention latency.
 * Hybrid sorting.
+* Add note on non-parallel histogramming to save memory.
+* Asserting on histogram counter overflow.
 
 ## Resources
 
