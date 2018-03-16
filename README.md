@@ -496,6 +496,15 @@ Going narrower could allow us to skip more columns in common workloads. There's 
 room for experimentation in this area, maybe even trying non-uniformly wide radixes (8-16-8) or
 dynamic selection of radix widths.
 
+### CPU Bugs
+
+The numbers quoted in the [motivation](#motivation) were taken on intel microcode 06-3a-09 version 0x1c. A later
+update to 0x1f (dated 2018-02-07), issued to mitigate [Spectre](https://en.wikipedia.org/wiki/Spectre_(security_vulnerability))
+and [Meltdown](https://en.wikipedia.org/wiki/Meltdown_(security_vulnerability)), decreased performance _significantly_.
+The ~460ms radix sort now took ~630ms, and the `std::sort` went from 3.5s to 5s.
+
+_TODO: Determine if huge-pages helps_
+
 ### Compiler issues
 
 _TODO_: Very suspectible to compiler optimization (check << 3 vs * 8 again), GCC7.3 vs GCC5...
