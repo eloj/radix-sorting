@@ -22,7 +22,7 @@ void counting_sort_8(uint8_t *arr, size_t n)
 
 static void print_array_8(const uint8_t *arr, size_t n) {
 	for (size_t i = 0 ; i < n ; ++i) {
-		printf("%08zx: %02x\n", i, arr[i]);
+		printf("%08zx: %d\n", i, arr[i]);
 	}
 }
 

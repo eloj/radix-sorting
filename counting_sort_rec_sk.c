@@ -42,7 +42,7 @@ void counting_sort_rec_sk(struct sortrec *arr, struct sortrec *aux, size_t n)
 
 static void print_array_rec(const struct sortrec *arr, size_t n) {
 	for (size_t i = 0 ; i < n ; ++i) {
-		printf("%08zx: %02x -> %s\n", i, key_of(&arr[i]), arr[i].name);
+		printf("%08zx: %d -> %s\n", i, key_of(&arr[i]), arr[i].name);
 	}
 }
 

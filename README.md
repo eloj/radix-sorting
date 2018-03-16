@@ -175,14 +175,14 @@ input array, i.e the sort is _stable_.
 
 ```console
 $ ./counting_sort_rec_sk
-00000000: 01 -> 1
-00000001: 02 -> 2
-00000002: 03 -> 3
-00000003: 2d -> 1st 45
-00000004: 2d -> 2nd 45
-00000005: 2d -> 3rd 45
-00000006: ff -> 1st 255
-00000007: ff -> 2nd 255
+00000000: 1 -> 1
+00000001: 2 -> 2
+00000002: 3 -> 3
+00000003: 45 -> 1st 45
+00000004: 45 -> 2nd 45
+00000005: 45 -> 3rd 45
+00000006: 255 -> 1st 255
+00000007: 255 -> 2nd 255
 ```
 
 Now we are ready to take the step from counting sorts to radix sorts.
@@ -367,7 +367,27 @@ To sort IEEE 754 single-precision (32-bit) floats (a.k.a _binary32_) in their na
 	return key ^ (-((uint32_t)key >> 31) | 0x80000000); // 32-bit float
 ```
 
+Example for sorting `{ 128.0f, 646464.0f, 0.0f, -0.0f, -0.5f, 0.5f, -128.0f, -INFINITY, NAN, INFINITY }`:
+
+```console
+00000000: ff800000 -inf
+00000001: c3000000 -128.000000
+00000002: bf000000 -0.500000
+00000003: 80000000 -0.000000
+00000004: 00000000 0.000000
+00000005: 3f000000 0.500000
+00000006: 43000000 128.000000
+00000007: 491dd400 646464.000000
+00000008: 7f800000 inf
+00000009: 7fc00000 nan
+```
+
 These of course extends naturally to 64-bit keys also.
+
+Performance-wise it's probably not worth worrying about the extra cost of the
+repeated key-derivation, but if you do you could still generalize a sort by using
+two functions; Rewrite the input with _into_ once, do the sort on the transformed input,
+and then transform it back by applying _outof_.
 
 For very specific sorts, where performance is of the outmost importance, it's certainly
 possible the change the underlying code instead of manipulating the key. You can reverse
