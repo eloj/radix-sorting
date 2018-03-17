@@ -58,10 +58,10 @@ integer. For 8- and 16-bit numbers this would amount to `2^8*4`=1KiB and `2^16*4
 32-bit integers, it'd require `2^32*4`=16GiB of memory. Multiply by two if you need 64- instead of 32-bit counters.
 
 As the wikipedia page explains, it's really the range of the keys involved that matters, not the magnitude. Some
-implementations can be seen scanning the input data to determine a base from the smallest key, and allocate just
-enough entries to fit `max(k) - min(k) + 1` keys. However, if you do this you will most likely have to
-consider what to do if the input range is too wide to handle, which is not a good position to be in. In practice
-you would _never_ want to fail on some inputs, which makes this sort of implementation not very useful.
+implementations can be seen scanning the input data to determine and allocate just enough entries to fit
+`max(k) - min(k) + 1` keys. However, if you do this you will most likely have to consider what to do if the
+input range is too wide to handle, which is not a good position to be in. In practice you would _never_ want to
+fail on some inputs, which makes this sort of implementation not very useful.
 
 As presented, this counting sort is _in-place_, but since -- in addition to not comparing elements -- it's not moving
 any elements either, it doesn't really make sense to think of it as being _stable_ or  _unstable_.
@@ -316,10 +316,12 @@ void radix_sort_u32(struct sortrec *arr, struct sortrec *aux, size_t n)
 ```
 
 The function `radix_sort_u32()` builds on `counting_sort_rec_sk()` in a straight-forward manner
-by introducing four counting sort passes.
+by introducing four counting sort passes. It's _unrolled_ by design, to show off the pattern.
 
 The four histograms are generated in one pass through the input. These are re-processed into prefix sums
-in a separate pass. We then sort columns *D* through *A*, swapping (a.k.a ping-ponging) the
+in a separate pass. A speed vs memory trade-off can be had by not pre-computing all the histograms.
+
+We then sort columns *D* through *A*, swapping (a.k.a ping-ponging) the
 input and output buffer between the passes.
 
 After the 4:th (final) sorting pass, since this is an even number, the final result is available
@@ -467,6 +469,16 @@ Skipping columns has the side-effect of the final sorted result ending up in eit
 original input buffer or the auxillary buffer, depending on whether you sorted an even
 or odd number of columns. I prefer to have the sort function return the pointer
 to the result, rather than add a copy step.
+
+### Histogram memory
+
+Pre-calulating the histograms for multiple radixes at one time is not strictly necessary
+since the counts aren't affected by the sorting, Memory can be saved by calculating only
+the histogram(s) you need for the next pass or two.
+
+In the simplest case this results in one extra pass through the data per radix, minus
+one, but you could try and put the counting inside the sort loop _prior_ to the one
+where you need the prefix sums, and ping-pong two histogram buffers.
 
 ### Prefetching
 
