@@ -1,6 +1,7 @@
-OPT=-O3 -g -fomit-frame-pointer -funroll-loops -fstrict-aliasing -march=native -mtune=native -msse4
+OPT=-O3 -g -fomit-frame-pointer -funroll-loops -fstrict-aliasing -march=native -mtune=native -msse4.2 -mavx
 WARNFLAGS=-Wall -Wextra -Wno-unused-parameter
 MISCFLAGS=-fstack-protector -fvisibility=hidden
+# -mindirect-branch=thunk
 CFLAGS=-std=c11 $(OPT) $(MISCFLAGS) $(WARNFLAGS)
 CXXFLAGS=-std=gnu++14 $(OPT) $(MISCFLAGS) $(WARNFLAGS)
 
@@ -16,7 +17,7 @@ endif
 
 all: radix counting_sort_8 counting_sort_8s counting_sort_rec_sk radix_sort_u32 genkeys
 
-test:
+test: radix
 	${TEST_PREFIX} ./radix $N
 
 counting_sort_8: counting_sort_8.c
