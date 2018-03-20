@@ -335,7 +335,7 @@ we want to sort in descending order?
 
 First off, for a LSB radix sort, the keys really need to be the same width,
 and narrower is better to keep the number of passes down. This means that
-an LSB implementtion is not well suited to sort character strings of any significant
+an LSB implemention is not well suited to sort character strings of any significant
 length. For those, a MSB radix sort is better.
 
 For sorting floats, doubles or other fixed-width keys, or changing the sort order,
