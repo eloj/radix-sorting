@@ -57,17 +57,17 @@ of this counting sort become fairly obvious; you need a location to store the co
 integer. For 8- and 16-bit numbers this would amount to `2^8*4`=1KiB and `2^16*4`=256KiB of memory. For
 32-bit integers, it'd require `2^32*4`=16GiB of memory. Multiply by two if you need 64- instead of 32-bit counters.
 
-As the wikipedia page explains, it's really the range of the keys involved that matters, not the magnitude. Some
+As the wikipedia page explains, it's really the range of the keys involved that matters. Some
 implementations can be seen scanning the input data to determine and allocate just enough entries to fit
 `max(k) - min(k) + 1` keys. However, if you do this you will most likely have to consider what to do if the
 input range is too wide to handle, which is not a good position to be in. In practice you would _never_ want to
-fail on some inputs, which makes this sort of implementation not very useful.
+fail on some inputs, which makes this implementation not very useful.
 
 As presented, this counting sort is _in-place_, but since -- in addition to not comparing elements -- it's not moving
 any elements either, it doesn't really make sense to think of it as being _stable_ or  _unstable_.
 
-To get us closer to radix sorting, we now need to consider a slightly more general variant where we're "rearranging"
-input elements:
+To get us closer to radix sorting, we now need to consider a slightly more general variant where we're, at
+least conceptually, rearranging input elements:
 
 [Listing 2](counting_sort_8s.c):
 
@@ -111,7 +111,7 @@ array is required; the algorithm would break if we tried to write directly into 
 However, the _main_ difference between this and the first variant is that we're no longer directly writing the
 output from the counts. Instead the counts are re-processed into a series of prefix sums in the
 second loop. This gives us, for each input value, its first location in the sorted output array, i.e
-the value of `cnt[j]` tells us our the offset at which to write the first _j_ to the output.
+the value of `cnt[j]` tells us our the array index at which to write the first _j_ to the output.
 
 For instance, `cnt[0]` will always be zero, because any `0` will always end up in the first
 position in the output. `cnt[1]` will contain how many zeroes precede the first `1`, `cnt[2]` will
@@ -164,7 +164,7 @@ We are now sorting an array of `struct sortrec`, not an array of octets.
 
 The primary modification in the sorting function is the use of a function `key_of()`, which returns
 the key for a given record. The main insight you should take away from this is that if the things we're sorting,
-the _entries_, aren't _themselves the keys_, we just need some way to _derive_ a key from an entry.
+the _entries_, aren't _themselves the keys_, we just need some way to _retrieve_ or _derive_ a key from an entry.
 
 We still use a single octet as the key inside the `struct sortrec`, but associated with each key
 is a short string. This allows us to demonstrate *a)* that sorting entries with associated data is not a problem,
@@ -193,17 +193,33 @@ _NOTE: Very much work in progress._
 
 A radix sort works by looking at some portion of a key, sorting all entries based on
 that portion, then taking another pass and look at the next portion, and so on until
-the whole of the keys, or as much as is necessary, has been processed.
+the whole of the keys, or as much as is necessary, have been processed.
 
-Some texts describe this as looking at the individual digits of a base-10 integer key,
-separating each digit by taking the key modulo 10, and then dividing by 10 to get to the
-next digit. Each digit is then the _radix_, the portion of the key we're sorting on.
+Some texts describe this as looking at the individual digits of an integer key, which
+you can process digit-by-digit via a series of modulo (remainder) and division operations
+with the number 10, the base or [radix](https://en.wikipedia.org/wiki/Radix).
 
-In a computer we deal with bits. So instead of division and modulo, we use bit-shifts
-and bit-masking, and conceptually we consider the key as a bitstring, not a number _per se_.
+In a computer we deal with bits, which means the base is inherently two, not ten.
 
-The _radix_ forms a column down through the keys to be sorted, were they written out
-one above the next in binary, or more conveniently, hexadecimal:
+Because working with individual bits is in some sense "slow", we group multiple of
+them together into units that are either faster and/or more convenient to work with.
+One such grouping is into strings of eight bits, called octets or [bytes](https://en.wikipedia.org/wiki/Byte).
+
+An octet, `2^8` bits, can represent `256` different values. In other words, just
+as processing a base-10 number digit-by-digit is operating in radix-10, processing
+a binary number in chunks of eight bits means operating in radix-256.
+
+Since we're not going to do any math with the keys, it may help to conceptually
+consider them simply as _bit-strings_ instead of numbers. This gets rid of some
+baggage which isn't useful to the task at hand.
+
+Because we're using a computer and operate on bits, instead of division and modulo
+operations, we use _bit-shifts_ and _bit-masking_.
+
+Below is a table of random 32-bit keys written out in [hexadecimal](https://en.wikipedia.org/wiki/Hexadecimal), or base-16,
+which is a very convenient notation for the task at hand. In hexadecimal
+a group of four bits is represented with a symbol (digit) from 0-F, and
+consequently a group of eight bits is represented by two such symbols.
 
  | 32-bit key | A  | B  | C  | D  |
  | :--------- | -- | -- | -- | -- |
@@ -216,12 +232,12 @@ one above the next in binary, or more conveniently, hexadecimal:
  | B2667C54   | B2 | 66 | 7C | 54 |
  | 8C8E59A6   | 8C | 8E | 59 | A6 |
 
-If you consider the table of random 32-bit keys above, with the four 8-bit wide columns marked
-*A* through *D*, there's a choice to be made; if we're going to process these keys one column
-at a time, _in which order do we process the columns_?
+If you consider this table, with the four 8-bit wide columns marked *A* through *D*, there's a choice to be made;
+if we're going to process these keys top to bottom, one column at a time, _in which order do we process the columns_?
 
-You may have been waiting for me to mention the two main paths available when implementing
-a radix sort; _Least Significant Bit_ (LSB) or _Most Significant Bit_ (MSB) first.
+This choice gives rise to the _two main classes_ of radix sorts, those that are _Least Significant Bits_ (LSB)
+first and those that are _Most Significant Bits_ (MSB) first. Sometimes 'digit' is substituted for 'bits',
+it's the same thing.
 
 If you have prior experience you may already know that, based on the material presented so far,
 we're going down the LSB path, meaning we'll process the columns from right to left; D, C, B, A.
