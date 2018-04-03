@@ -2,7 +2,7 @@
 # Notes on Radix Sorting and Implementation
 
 _TODO: These notes (and code) are incomplete. My goal is to eventually provide a step-by-step
-guide and introduction to a very simple radix sort implementation, and try to cover
+guide and introduction to a simple radix sort implementation, and try to cover
 the basic issues which are sometimes glossed over in text books and courses.
 Furthermore, WHILE THIS NOTE PERSISTS, I MAY FORCE PUSH TO MASTER_
 
@@ -217,7 +217,7 @@ Because we're using a computer and operate on bits, instead of division and modu
 operations, we use _bit-shifts_ and _bit-masking_.
 
 Below is a table of random 32-bit keys written out in [hexadecimal](https://en.wikipedia.org/wiki/Hexadecimal), or base-16,
-which is a very convenient notation for the task at hand. In hexadecimal
+which is a convenient notation for the task at hand. In hexadecimal
 a group of four bits is represented with a symbol (digit) from 0-F, and
 consequently a group of eight bits is represented by two such symbols.
 
@@ -245,7 +245,7 @@ we're going down the LSB path, meaning we'll process the columns from right to l
 In our counting sorts, the key width and the radix (or column) width were the same; 8-bits.
 In a radix sort the column width will be less or equal to the key width, and in a LSB radix sort
 we'll be forced to make multiple passes over the input to make up the difference. The wider
-our radix, the more memory but fewer passes we'll need. This is the tradeoff.
+our radix the more memory (to track counts), but fewer passes we'll need. This is the tradeoff.
 
 The assertion then, and we will demonstrate this to be true, is that if we apply counting sort
 by column *D*, and then apply counting sort on that result by column *C*, and so forth, after the last
@@ -426,16 +426,14 @@ that may be worth investigating.
 ### Hybrids
 
 I have observed a few different radix sort implementations, and some of them have
-a larger _latency_ than others. What I mean by that is that there's a certain
-fixed overhead for calling the function even if you are sorting very few entries.
-
-This gives rise to the idea of hybrid sorts, where you redirect small workloads
-(e.g N < 100) to say an _insertion sort_. This is often a part of MSB radix sorts.
+a larger _fixed overhead_ than others. This gives rise to the idea of hybrid sorts,
+where you redirect small workloads (e.g N < 100) to say an _insertion sort_.
+This is often a part of MSB radix sorts.
 
 It's also possible to do one MSB pass and then LSB sort the sub-results. This saves
 memory and memory management from doing all MSB passes, and should improve cache
 locality for the LSB passes. That said, in the one implementation I've tried, the
-latency was quite high. (_TODO: determine exact reason_)
+fixed overhead was quite high. (_TODO: determine exact reason_)
 
 ### Pre-sorted detection
 
@@ -461,7 +459,7 @@ histogram loop.
 If every radix for a column is the same, then the sort loop for that column will
 simply be a copy from one buffer to another, which is a waste.
 
-Fortunately detecting this is very easy, you don't even have to scan through the
+Fortunately detecting this is easy, you don't even have to scan through the
 histograms. Simply sample the key of the first element. If any of its radixes has
 a histogram count equal to the total number of entries to sort, that column can be
 skipped.
