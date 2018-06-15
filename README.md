@@ -57,13 +57,13 @@ of this counting sort become fairly obvious; you need a location to store the co
 integer. For 8- and 16-bit numbers this would amount to `2^8*4`=1KiB and `2^16*4`=256KiB of memory. For
 32-bit integers, it'd require `2^32*4`=16GiB of memory. Multiply by two if you need 64- instead of 32-bit counters.
 
-As the wikipedia page explains, it's really the range of the keys involved that matters. Some
+As the wikipedia page explains, it's really the size of the keys involved that matters. Some
 implementations can be seen scanning the input data to determine and allocate just enough entries to fit
-`max(k) - min(k) + 1` keys. However, if you do this you will most likely have to consider what to do if the
-input range is too wide to handle, which is not a good position to be in. In practice you would _never_ want to
-fail on some inputs, which makes this implementation not very useful.
+`max(key) - min(key) + 1` keys. However, if you do this you will most likely have to consider what to do if the
+input domain is too wide to handle, which is not a good position to be in. In practice you would _never_ want to
+fail on some inputs, which makes that type of implementation not very useful.
 
-As presented, this counting sort is _in-place_, but since -- in addition to not comparing elements -- it's not moving
+As presented, this sort is _in-place_, but since -- in addition to not comparing elements -- it's not moving
 any elements either, it doesn't really make sense to think of it as being _stable_ or  _unstable_.
 
 To get us closer to radix sorting, we now need to consider a slightly more general variant where we're, at
@@ -109,9 +109,9 @@ We have introduced a separate output array, which means we are no longer _in-pla
 array is required; the algorithm would break if we tried to write directly into the input array.
 
 However, the _main_ difference between this and the first variant is that we're no longer directly writing the
-output from the counts. Instead the counts are re-processed into a series of prefix sums in the
+output from the counts. Instead the counts are re-processed into a series of prefix sums (sometimes called a _scan_) in the
 second loop. This gives us, for each input value, its first location in the sorted output array, i.e
-the value of `cnt[j]` tells us our the array index at which to write the first _j_ to the output.
+the value of `cnt[j]` tells us the array index at which to write the first _j_ to the output.
 
 For instance, `cnt[0]` will always be zero, because any `0` will always end up in the first
 position in the output. `cnt[1]` will contain how many zeroes precede the first `1`, `cnt[2]` will
@@ -160,14 +160,20 @@ void counting_sort_rec_sk(struct sortrec *arr, struct sortrec *aux, size_t n)
 }
 ```
 
-We are now sorting an array of `struct sortrec`, not an array of octets.
+We are now sorting an array of `struct sortrec`, not an array of octets. The name and the type of the struct
+here is arbitary; it's only used to show that we're not restricted to sorting _arrays of integers_.
 
-The primary modification in the sorting function is the use of a function `key_of()`, which returns
-the key for a given record. The main insight you should take away from this is that if the things we're sorting,
-the _entries_, aren't _themselves the keys_, we just need some way to _retrieve_ or _derive_ a key from an entry.
+The primary modification to the sorting function is the small addition of a function `key_of()`, which returns
+the key for a given record.
 
-We still use a single octet as the key inside the `struct sortrec`, but associated with each key
-is a short string. This allows us to demonstrate *a)* that sorting entries with associated data is not a problem,
+The main insight you should take away from this is that if the things we're sorting aren't themselves the
+keys but some composed type, we just need some way to _retrieve_ or _derive_ a key for each entry instead.
+
+We're still restricted to integer keys. We rely on there being some sort of mapping from our records (or _entries_)
+to the integers which orders the records the way we require.
+
+Here we still use a single octet inside the `struct sortrec` as the key. Associated with each key
+is a short string. This allows us to demonstrate *a)* that sorting keys with associated data is not a problem,
 and *b)* that the sort is indeed stable.
 
 Running the full program demonstrates that each _like-key_ is output in the same order it came in the
