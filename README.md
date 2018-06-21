@@ -407,24 +407,7 @@ Example for sorting `{ 128.0f, 646464.0f, 0.0f, -0.0f, -0.5f, 0.5f, -128.0f, -IN
 00000009: 7fc00000 nan
 ```
 
-These of course extends naturally to 64-bit keys also.
-
-Performance-wise it's probably not worth worrying about the extra cost of the
-repeated key-derivation, but if you do, you could still make a general sort by
-parameterizing the sort on two functions; One to rewrite the input buffer _into_
-the desired key-derivation, and the other to transform the final output buffer
-_back_ to the original form.
-
-The savings come from not having to apply the key-derivation function to each key during
-the intermediate sorting passes.
-
-For very specific sorts, where performance is of the outmost importance, it's certainly
-possible the change the underlying code instead of manipulating the key. You can reverse
-the sort-order by reversing the prefix sum, or simply reading the final result backwards
-if possible.
-
-The 2000-era [Radix Sort Revisited](http://codercorner.com/RadixSortRevisited.htm) presents
-a more direct way to change the code to handle floats.
+These of course extends naturally to 64-bit keys.
 
 
 ## Optimizations
@@ -504,6 +487,26 @@ the histogram(s) you need for the next pass or two.
 In the simplest case this results in one extra pass through the data per radix, minus
 one, but you could try and put the counting inside the sort loop _prior_ to the one
 where you need the prefix sums, and ping-pong two histogram buffers.
+
+### Key rewriting
+
+Instead of applying the key-derivation function on each access, you could
+parameterize the sort on two functions; One to rewrite the input buffer _into_
+the desired key-derivation, and the other to transform the final output buffer
+_back_ to the original form.
+
+The savings are supposed to come from not having to apply the key-derivation function
+to each key during the intermediate sorting passes. In my testing a performance increase
+from this micro-optimization -- rewriting in the histogramming loop and the last sorting
+pass -- could not be measured even at 40 million keys. It's possible that this is worth
+it on less capable hardware.
+
+It's also possible to change the underlying code instead of manipulating the key. You
+can reverse the sort-order by reversing the prefix sum, or simply reading the final
+result backwards if possible.
+
+The 2000-era [Radix Sort Revisited](http://codercorner.com/RadixSortRevisited.htm) presents
+a direct way to change the code to handle floats.
 
 ### Prefetching
 
