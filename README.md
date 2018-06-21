@@ -224,7 +224,7 @@ operations, we use _bit-shifts_ and _bit-masking_.
 
 Below is a table of random 32-bit keys written out in [hexadecimal](https://en.wikipedia.org/wiki/Hexadecimal), or base-16,
 which is a convenient notation for the task at hand. In hexadecimal
-a group of four bits is represented with a symbol (digit) from 0-F, and
+a group of four bits is represented with a symbol (digit) from 0-F (0-9 plus A-F), and
 consequently a group of eight bits is represented by two such symbols.
 
  | 32-bit key | A  | B  | C  | D  |
@@ -352,7 +352,7 @@ in the input buffer.
 ## Key derivation; Sort order and floats
 
 So far we have been using an unsigned integer as the key, which we've sorted
-in ascending order. What if key we want to sort on is some other type, or if
+in ascending order. What if the key we want to sort on is some other type, or if
 we want to sort in descending order?
 
 First off, for a LSB radix sort, the keys really need to be the same width,
@@ -373,7 +373,8 @@ function return the bitwise inverse of the key:
 
 To treat the key as a signed integer, we need to manipulate the sign-bit,
 since by default this is set for negative numbers, meaning they will appear
-at the end of the result.
+at the end of the result. Using the xor operator we flip the top bit, which
+neatly solves the problem:
 
 ```c
 	return key ^ 0x80000000; // signed 32-bit (asc)
@@ -409,9 +410,13 @@ Example for sorting `{ 128.0f, 646464.0f, 0.0f, -0.0f, -0.5f, 0.5f, -128.0f, -IN
 These of course extends naturally to 64-bit keys also.
 
 Performance-wise it's probably not worth worrying about the extra cost of the
-repeated key-derivation, but if you do you could still generalize a sort by using
-two functions; Rewrite the input with _into_ once, do the sort on the transformed input,
-and then transform it back by applying _outof_.
+repeated key-derivation, but if you do, you could still make a general sort by
+parameterizing the sort on two functions; One to rewrite the input buffer _into_
+the desired key-derivation, and the other to transform the final output buffer
+_back_ to the original form.
+
+The savings come from not having to apply the key-derivation function to each key during
+the intermediate sorting passes.
 
 For very specific sorts, where performance is of the outmost importance, it's certainly
 possible the change the underlying code instead of manipulating the key. You can reverse
