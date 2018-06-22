@@ -256,6 +256,7 @@ int main(int argc, char *argv[])
 	struct timespec tp_start;
 	struct timespec tp_end;
 
+	printf("Sorting...\n");
 	test_radix_sort(src, n, &tp_start, &tp_end);
 #if 0
 	clock_gettime(CLOCK_MONOTONIC_RAW, &tp_start);
