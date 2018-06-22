@@ -1,3 +1,7 @@
+/*
+	TODO: mmap support is half-broken as it's not applied to aux buffer.
+	TODO: static error if called on unsupported type.
+*/
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -7,12 +11,23 @@
 #include <cassert>
 #include <algorithm>
 
+#ifdef MMAP
 #include <sys/mman.h> // for mmap
+#endif
 
-/*
-	TODO: mmap support is half-broken as it's not applied to aux buffer.
-	TODO: static error if called on unsupported type.
-*/
+#ifdef WIN32
+#include <windows.h>
+#define CLOCK_MONOTONIC_RAW 0
+// via https://stackoverflow.com/a/31335254/156769
+int clock_gettime(int, struct timespec *spec)
+{
+	__int64 wintime; GetSystemTimeAsFileTime((FILETIME*)&wintime);
+	wintime -= 116444736000000000LL; // 1 jan 1601 to 1 jan 1970
+	spec->tv_sec  =wintime / 10000000LL;      // seconds
+	spec->tv_nsec =wintime % 10000000LL *100; // nano-seconds
+	return 0;
+}
+#endif
 
 #define RESTRICT __restrict__
 
@@ -182,6 +197,7 @@ static void* read_file(const char *filename, size_t *limit, int use_mmap) {
 			bytes = *limit;
 
 		if (use_mmap) {
+#if MMAP
 			int flags = MAP_HUGETLB | MAP_NORESERVE; // | MAP_HUGE_2MB; // MAP_NORESERVE
 			keys = mmap(NULL, bytes, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS | flags, -1, 0);
 			if (!keys || (keys == MAP_FAILED)) {
@@ -189,6 +205,9 @@ static void* read_file(const char *filename, size_t *limit, int use_mmap) {
 				return NULL;
 			}
 			printf("Mapping memory at %p, reading %zu bytes.\n", keys, bytes);
+#else
+			static_assert("mmap not available!");
+#endif
 		} else {
 			printf("Allocating and reading %zu bytes.\n", bytes);
 			keys = malloc(bytes * 2);
@@ -258,7 +277,9 @@ int main(int argc, char *argv[])
 	if (!use_mmap) {
 		free(src);
 	} else {
+#if MMAP
 		munmap(src, bytes);
+#endif
 	}
 
 	return 0;
