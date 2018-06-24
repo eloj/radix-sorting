@@ -16,21 +16,45 @@ Unless otherwise specified, this code is written foremost to be clear and easy t
 
 All code is provided under the [MIT License](LICENSE).
 
-## Motivation
+## Table of Contents
+
++ [Motivation](#motivation)
++ [From the top; Counting sort](#counting-sort)
+    + [Listing 1](#listing_1)
+    + [Listing 2](#listing_2)
+    + [Listing 3](#listing_3)
++ [All together now; Radix sort](#radix-sort)
+    + [Listing 4](#listing_4)
++ [Key derivation; Sort order and floats](#ordering)
++ [Optimizations](#optimizations)
+    + [Hybrids](#hybrids)
+    + [Pre-sorted detection](#sort-detection)
+    + [Column skipping](#column-skipping)
+    + [Histogram memory](#histogram-memory)
+    + [Key rewriting](#key-rewriting)
+    + [Prefetching](#prefetching)
+    + [Vectorized histogramming](#vectorization)
+    + [Wider or narrower radix](#radix-width)
+    + [CPU Bugs](#cpu-bugs)
+    + [Compiler issues](#compiler-issues)
++ [C++ Implementation](#cpp-implementation)
++ [Resources](#resources)
+
+## <a name="motivation"></a> Motivation
 
 This code can sort 40 million 32-bit integers in under half a second using a single
 core of an [Intel i5-3570T](https://ark.intel.com/products/65521/Intel-Core-i5-3570T-Processor-6M-Cache-up-to-3_30-GHz),
 a low-TDP CPU from 2012 using DDR3-1333. `std::sort` requires ~3.5s for the same task (with the
 caveat that it's _in-place_).
 
-## From the top; Counting sort
+## <a name="counting-sort"></a> From the top; Counting sort
 
 The simplest way to sort an array of integers, without comparing elements, is to simply count
 how many there are of each unique integer, and use those counts to write the result.
 
 This is the most basic [counting sort](https://en.wikipedia.org/wiki/Counting_sort).
 
-[Listing 1](counting_sort_8.c):
+<a name="listing_1"></a>[Listing 1](counting_sort_8.c):
 
 ```c
 void counting_sort_8(uint8_t *arr, size_t n)
@@ -69,7 +93,7 @@ any elements either, it doesn't really make sense to think of it as being _stabl
 To get us closer to radix sorting, we now need to consider a slightly more general variant where we're, at
 least conceptually, rearranging input elements:
 
-[Listing 2](counting_sort_8s.c):
+<a name="listing_2"></a>[Listing 2](counting_sort_8s.c):
 
 ```c
 void counting_sort_8s(uint8_t *arr, uint8_t *aux, size_t n)
@@ -127,7 +151,7 @@ since we're treating each input entry, as a whole, as the key.
 
 With a few basic modifications, we arrive at
 
-[Listing 3](counting_sort_rec_sk.c):
+<a name="listing_3"></a>[Listing 3](counting_sort_rec_sk.c):
 
 ```c
 void counting_sort_rec_sk(struct sortrec *arr, struct sortrec *aux, size_t n)
@@ -193,9 +217,7 @@ $ ./counting_sort_rec_sk
 
 Now we are ready to take the step from counting sorts to radix sorts.
 
-## All together now; Radix sort
-
-_NOTE: Very much work in progress._
+## <a name="radix-sort"></a> All together now; Radix sort
 
 A radix sort works by looking at some portion of a key, sorting all entries based on
 that portion, then taking another pass and look at the next portion, and so on until
@@ -257,7 +279,7 @@ The assertion then, and we will demonstrate this to be true, is that if we apply
 by column *D*, and then apply counting sort on that result by column *C*, and so forth, after the last
 column (*A*) is processed, our data will be sorted and this sort is stable.
 
-[Listing 3](radix_sort_u32.c):
+<a name="listing_4"></a>[Listing 4](radix_sort_u32.c):
 
 ```c
 void radix_sort_u32(struct sortrec *arr, struct sortrec *aux, size_t n)
@@ -349,7 +371,7 @@ input and output buffer between the passes.
 After the 4:th (final) sorting pass, since this is an even number, the final result is available
 in the input buffer.
 
-## Key derivation; Sort order and floats
+## <a name="ordering"></a> Key derivation; Sort order and floats
 
 So far we have been using an unsigned integer as the key, which we've sorted
 in ascending order. What if the key we want to sort on is some other type, or if
@@ -410,14 +432,14 @@ Example for sorting `{ 128.0f, 646464.0f, 0.0f, -0.0f, -0.5f, 0.5f, -128.0f, -IN
 These of course extends naturally to 64-bit keys.
 
 
-## Optimizations
+## <a name="optimizations"></a> Optimizations
 
 _TODO: This section very much a work in progress/TBD thing_
 
 In this section I'll talk about some optimizations that I have tried, or
 that may be worth investigating.
 
-### Hybrids
+### <a name="hybrids"></a> Hybrids
 
 I have observed a few different radix sort implementations, and some of them have
 a larger _fixed overhead_ than others. This gives rise to the idea of hybrid sorts,
@@ -429,7 +451,7 @@ memory and memory management from doing all MSB passes, and should improve cache
 locality for the LSB passes. That said, in the one implementation I've tried, the
 fixed overhead was quite high. (_TODO: determine exact reason_)
 
-### Pre-sorted detection
+### <a name="sort-detection"></a> Pre-sorted detection
 
 Since we have to scan once through the input to build our histograms, it's
 relatively easy to add code there to detect if the input is already sorted/reverse-sorted,
@@ -448,7 +470,7 @@ Pushing further, say trying to detect already sorted columns, didn't seem worth 
 effort in my experiments. You don't want to add too many conditionals to the
 histogram loop.
 
-### Column skipping
+### <a name="column-skipping"></a >Column skipping
 
 If every radix for a column is the same, then the sort loop for that column will
 simply be a copy from one buffer to another, which is a waste.
@@ -478,7 +500,7 @@ original input buffer or the auxillary buffer, depending on whether you sorted a
 or odd number of columns. I prefer to have the sort function return the pointer
 to the result, rather than add a copy step.
 
-### Histogram memory
+### <a name="histogram-memory"></a> Histogram memory
 
 Pre-calulating the histograms for multiple radixes at one time is not strictly necessary
 since the counts aren't affected by the sorting, Memory can be saved by calculating only
@@ -488,7 +510,7 @@ In the simplest case this results in one extra pass through the data per radix, 
 one, but you could try and put the counting inside the sort loop _prior_ to the one
 where you need the prefix sums, and ping-pong two histogram buffers.
 
-### Key rewriting
+### <a name="key-rewriting"></a> Key rewriting
 
 Instead of applying the key-derivation function on each access, you could
 parameterize the sort on two functions; One to rewrite the input buffer _into_
@@ -508,7 +530,7 @@ result backwards if possible.
 The 2000-era [Radix Sort Revisited](http://codercorner.com/RadixSortRevisited.htm) presents
 a direct way to change the code to handle floats.
 
-### Prefetching
+### <a name="prefetching"></a> Prefetching
 
 Working primarily on IA-32 and AMD64/x86-64 CPUs, I've never had a good experience with
 adding manual prefetching (i.e `__builtin_prefetch`).
@@ -518,7 +540,7 @@ to his code that was running on a Pentium 3.
 
 I'll put this in the *TBD* column for now.
 
-### Vectorized histogramming
+### <a name="vectorization"></a> Vectorized histogramming
 
 The vector instructions afforded by x86-64 (SSE, AVX, AVX2) does not seem to provide a path
 to a vectorized implementation that is worth it in practice. The issue seems to be poor
@@ -526,7 +548,7 @@ gather/scatter support. I'm looking forward to be proven wrong about this in the
 
 For other architectures this may be more viable.
 
-### Wider or narrower radix
+### <a name="radix-width"></a> Wider or narrower radix
 
 Using multiples of eight bits for the radix is convenient, but not required. If we do,
 we limit ourselves to 8-bit or 16-bit wide radixes in practice. Using an intermediate size such as 11-bits
@@ -537,7 +559,7 @@ Going narrower could allow us to skip more columns in common workloads. There's 
 room for experimentation in this area, maybe even trying non-uniformly wide radixes (8-16-8) or
 dynamic selection of radix widths.
 
-### CPU Bugs
+### <a name="cpu-bugs"></a> CPU Bugs
 
 The numbers quoted in the [motivation](#motivation) were taken on intel microcode 06-3a-09 version 0x1c. A later
 update to 0x1f (dated 2018-02-07), issued to mitigate [Spectre](https://en.wikipedia.org/wiki/Spectre_(security_vulnerability))
@@ -546,13 +568,13 @@ The ~460ms radix sort now took ~630ms, and the `std::sort` went from 3.5s to 5s.
 
 _TODO: Determine if huge-pages helps_
 
-### Compiler issues
+### <a name="compiler-issues"></a> Compiler issues
 
-_TODO_: Very suspectible to compiler optimization (check << 3 vs * 8 again), GCC7.3 vs GCC5...
+_TODO_: Very suspectible to compiler optimization (check << 3 vs * 8 again), GCC-latest vs GCC5 or older...
 
-## C++ Implementation
+## <a name="cpp-implementation"></a> C++ Implementation
 
-_TODO_
+_TODO: This code is very much a work in progress, used to test various techniques, and does NOT represent a final 'product'_
 
 [radix.cpp](radix.cpp)
 
@@ -562,12 +584,9 @@ _TODO_
 
 ## Miscellaneous
 
-* Not going over asymptotics, but mention latency.
-* Hybrid sorting.
-* Add note on non-parallel histogramming to save memory.
 * Asserting on histogram counter overflow.
 
-## Resources
+## <a name="resources"></a> Resources
 
 * Pierre Terdiman, "[Radix Sort Revisited](http://codercorner.com/RadixSortRevisited.htm)", 2000.
 * Michael Herf, "[Radix Tricks](http://stereopsis.com/radix.html), 2001.
