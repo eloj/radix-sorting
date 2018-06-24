@@ -83,9 +83,11 @@ integer. For 8- and 16-bit numbers this would amount to `2^8*4`=1KiB and `2^16*4
 
 As the wikipedia page explains, it's really the size of the keys involved that matters. Some
 implementations can be seen scanning the input data to determine and allocate just enough entries to fit
-`max(key) - min(key) + 1` keys. However, if you do this you will most likely have to consider what to do if the
-input domain is too wide to handle, which is not a good position to be in. In practice you would _never_ want to
-fail on some inputs, which makes that type of implementation not very useful.
+either `max(key) + 1`, or tighter, `max(key) - min(key) + 1` keys. However, unless you do this because you
+allocate memory on each sort call and just want to save some, you will most likely have to consider what to do
+if the input range is too wide to handle, which is not a good position to be in. In practice you would _never_
+want to fail on some inputs, which makes that type of implementation not very useful, unless you know that the
+range of input values will be limited.
 
 As presented, this sort is _in-place_, but since -- in addition to not comparing elements -- it's not moving
 any elements either, it doesn't really make sense to think of it as being _stable_ or  _unstable_.
