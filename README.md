@@ -25,6 +25,7 @@ All code is provided under the [MIT License](LICENSE).
     + [Listing 3](#listing_3)
 + [All together now; Radix sort](#radix-sort)
     + [Listing 4](#listing_4)
+    + [Listing 5](#listing_5)
 + [Key derivation; Sort order and floats](#ordering)
 + [Optimizations](#optimizations)
     + [Hybrids](#hybrids)
@@ -372,6 +373,48 @@ input and output buffer between the passes.
 
 After the 4:th (final) sorting pass, since this is an even number, the final result is available
 in the input buffer.
+
+Extending to larger keys, e.g 64-bit keys and beyond, can be achieved by simply adding more unrolled passes,
+but for completeness, let us instead look at how we can augment the function to sort in multiple passes via
+a _key-shift_ argument, as this is a very common implementation detail:
+
+<a name="listing_5"></a>[Listing 5](radix_sort_u64_multipass.c):
+
+```c
+struct sortrec {
+	uint64_t key;
+	const char *name;
+};
+
+uint64_t key_of(const struct sortrec *rec) {
+	return rec->key;
+}
+
+static void radix_sort_u32_multipass(struct sortrec *arr, struct sortrec *aux, size_t n, unsigned int keyshift)
+{
+	size_t cnt0[256] = { 0 };
+	size_t cnt1[256] = { 0 };
+	size_t cnt2[256] = { 0 };
+	size_t cnt3[256] = { 0 };
+	size_t i;
+
+	// Generate histograms
+	for (i = 0 ; i < n ; ++i) {
+		uint32_t k = key_of(arr + i) >> keyshift;
+```
+
+At each point we retrieve the key via `key_of`, we shift out any bits we've already processed in a previous pass.
+
+We can then sort 64-bit wide by calling the sort function twice as such:
+
+```c
+	radix_sort_u32_multipass(arr, aux, N, 0);
+	radix_sort_u32_multipass(arr, aux, N, 32);
+```
+
+The first call will sort on bits 0-31 of the key, the second call on bits 32-63.
+
+This is only possible because the sort is stable.
 
 ## <a name="ordering"></a> Key derivation; Sort order and floats
 
