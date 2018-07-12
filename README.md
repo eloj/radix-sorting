@@ -20,12 +20,12 @@ All code is provided under the [MIT License](LICENSE).
 
 + [Motivation](#motivation)
 + [From the top; Counting sort](#counting-sort)
-    + [Listing 1](#listing_1)
-    + [Listing 2](#listing_2)
-    + [Listing 3](#listing_3)
+    + [Listing 1](#listing_cs8): In-place
+    + [Listing 2](#listing_cs8s): Stepping stone
+    + [Listing 3](#listing_csrec): Sorting records, stable
 + [All together now; Radix sort](#radix-sort)
-    + [Listing 4](#listing_4)
-    + [Listing 5](#listing_5)
+    + [Listing 4](#listing_rs32): 32-bit unrolled
+    + [Listing 5](#listing_rs64): 64-bit and beyond
 + [Key derivation; Sort order and floats](#ordering)
 + [Optimizations](#optimizations)
     + [Hybrids](#hybrids)
@@ -55,7 +55,7 @@ how many there are of each unique integer, and use those counts to write the res
 
 This is the most basic [counting sort](https://en.wikipedia.org/wiki/Counting_sort).
 
-<a name="listing_1"></a>[Listing 1](counting_sort_8.c):
+<a name="listing_cs8"></a>[Listing 1](counting_sort_8.c):
 
 ```c
 void counting_sort_8(uint8_t *arr, size_t n)
@@ -96,7 +96,7 @@ any elements either, it doesn't really make sense to think of it as being _stabl
 To get us closer to radix sorting, we now need to consider a slightly more general variant where we're, at
 least conceptually, rearranging input elements:
 
-<a name="listing_2"></a>[Listing 2](counting_sort_8s.c):
+<a name="listing_cs8s"></a>[Listing 2](counting_sort_8s.c):
 
 ```c
 void counting_sort_8s(uint8_t *arr, uint8_t *aux, size_t n)
@@ -154,7 +154,7 @@ since we're treating each input entry, as a whole, as the key.
 
 With a few basic modifications, we arrive at
 
-<a name="listing_3"></a>[Listing 3](counting_sort_rec_sk.c):
+<a name="listing_csrec"></a>[Listing 3](counting_sort_rec_sk.c):
 
 ```c
 void counting_sort_rec_sk(struct sortrec *arr, struct sortrec *aux, size_t n)
@@ -282,7 +282,7 @@ The assertion then, and we will demonstrate this to be true, is that if we apply
 by column *D*, and then apply counting sort on that result by column *C*, and so forth, after the last
 column (*A*) is processed, our data will be sorted and this sort is stable.
 
-<a name="listing_4"></a>[Listing 4](radix_sort_u32.c):
+<a name="listing_rs32"></a>[Listing 4](radix_sort_u32.c):
 
 ```c
 void radix_sort_u32(struct sortrec *arr, struct sortrec *aux, size_t n)
@@ -378,7 +378,7 @@ Extending to larger keys, e.g 64-bit keys and beyond, can be achieved by simply 
 but for completeness, let us instead look at how we can augment the function to sort in multiple passes via
 a _key-shift_ argument, as this is a very common implementation detail:
 
-<a name="listing_5"></a>[Listing 5](radix_sort_u64_multipass.c):
+<a name="listing_rs64"></a>[Listing 5](radix_sort_u64_multipass.c):
 
 ```c
 struct sortrec {
