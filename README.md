@@ -26,7 +26,10 @@ All code is provided under the [MIT License](LICENSE).
 + [All together now; Radix sort](#radix-sort)
     + [Listing 4](#listing_rs32): 32-bit unrolled
     + [Listing 5](#listing_rs64): 64-bit and beyond
-+ [Key derivation; Sort order and floats](#ordering)
++ [Key derivation](#key-derivation)
+    + [Sort order](#ordering)
+    + [Signed integer keys](#signed-keys)
+    + [Floating point keys](#float-keys)
 + [Optimizations](#optimizations)
     + [Hybrids](#hybrids)
     + [Pre-sorted detection](#sort-detection)
@@ -194,7 +197,7 @@ The primary modification to the sorting function is the small addition of a func
 the key for a given record.
 
 The main insight you should take away from this is that if the things we're sorting aren't themselves the
-keys but some composed type, we just need some way to _retrieve_ or _derive_ a key for each entry instead.
+keys but some composed type, we just need some way to _extract_ or _derive_ a key for each entry instead.
 
 We're still restricted to integer keys. We rely on there being some sort of mapping from our records (or _entries_)
 to the integers which orders the records the way we require.
@@ -416,31 +419,44 @@ The first call will sort on bits 0-31 of the key, the second call on bits 32-63.
 
 This is only possible because the sort is stable.
 
-## <a name="ordering"></a> Key derivation; Sort order and floats
+## <a name="key-derivation"></a> Key derivation
 
-So far we have been using an unsigned integer as the key, which we've sorted
-in ascending order. What if the key we want to sort on is some other type, or if
-we want to sort in descending order?
+First let's get the question of sorting strings out of the way.
 
-First off, for a LSB radix sort, the keys really need to be the same width,
-and narrower is better to keep the number of passes down. This means that
-an LSB implemention is not well suited to sort character strings of any significant
-length. For those, a MSB radix sort is better.
+LSB radix sort is inherently columnar. The keys must all be the same width, and narrower is
+better to keep the number of passes down. To sort variable length keys you would first
+have to pad all keys on the left (MSD) side until they're the length of the longest key.
+
+This is to say, an LSB implemention is not well suited to sort character strings of any
+significant length. For those, a MSB radix sort is better.
 
 For sorting floats, doubles or other fixed-width keys, or changing the sort order,
-we can still use the LSB implementation as is. The trick is to map the bit-patterns of the key
-we have onto the unsigned integers.
+we can still use the LSB implementation as-is. The trick is to map the keys onto
+the unsigned integers.
 
-If we want to sort unsigned integers in _descending_ order, have the key-derivation
-function return the bitwise inverse of the key:
+We have seen the use of a function (e.g `key_of`), first in order to generalize sorting to different
+types of input records, and secondly as a means to sort in multiple passes by down-shifting the key.
+This function is sometimes refered to as a _key-extraction_ function.
+
+I'll use the term _key-derivation_ function instead, because we're not only extracting different
+parts of a key; using this function to manipulate the key in different ways, _to derive a sort key_,
+is how we're able to handle signed integers, floating point keys, and chose a sort order.
+
+### <a name="ordering"></a> Sort order
+
+The natural ordering for the unsigned integers is in _ascending_ order. If we instead want to sort
+in _descending_ order, simply have the _key-derivation_ function return the bitwise inverse
+(or [complement](https://en.wikipedia.org/wiki/Bitwise_operation#NOT)) of the key:
 
 ```c
 	return ~key; // unsigned (desc)
 ```
 
+### <a name="signed-keys"></a>Signed integer keys
+
 To treat the key as a signed integer, we need to manipulate the sign-bit,
 since by default this is set for negative numbers, meaning they will appear
-at the end of the result. Using the xor operator we flip the top bit, which
+at the end of the result. Using the [xor operator](https://en.wikipedia.org/wiki/Bitwise_operation#XOR) we flip the top bit, which
 neatly solves the problem:
 
 ```c
@@ -452,6 +468,8 @@ These can be combined to handle signed integers in descending order:
 ```c
 	return ~(key ^ 0x80000000); // signed 32-bit (desc)
 ```
+
+### <a name="float-keys"></a>Floating point keys
 
 To sort IEEE 754 single-precision (32-bit) floats (a.k.a _binary32_) in their natural order we need to invert the key if the sign-bit is set, else we need to flip the sign bit. (via [Radix Tricks](http://stereopsis.com/radix.html)):
 
@@ -475,7 +493,6 @@ Example for sorting `{ 128.0f, 646464.0f, 0.0f, -0.0f, -0.5f, 0.5f, -128.0f, -IN
 ```
 
 These of course extends naturally to 64-bit keys.
-
 
 ## <a name="optimizations"></a> Optimizations
 
@@ -633,9 +650,13 @@ _TODO: This code is very much a work in progress, used to test various technique
 
 [radix.cpp](radix.cpp)
 
+
 ## MSB - The other path
 
 _TODO_
+
++ Bucket sort
++ American Flag Sort
 
 ## Miscellaneous
 

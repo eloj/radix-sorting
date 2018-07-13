@@ -70,7 +70,7 @@ size_t verify_sort_kf(T *keys, size_t n, KeyFunc kf) {
 }
 
 template <typename T, typename KeyFunc>
-T* radix_sort(T * RESTRICT src, T * RESTRICT aux, size_t n, KeyFunc kf) {
+T* radix_sort(T * RESTRICT src, T * RESTRICT aux, size_t n, KeyFunc && kf) {
 	constexpr int wc = sizeof(T);
 	size_t hist[wc][256] = { }; // 8K/16K of histograms
 	int cols[wc];
