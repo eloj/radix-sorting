@@ -222,7 +222,7 @@ Now we are ready to take the step from counting sorts to radix sorts.
 
 ## <a name="radix-sort"></a> All together now; Radix sort
 
-A radix sort works by looking at some portion of a key, sorting all entries based on
+A [radix sort](https://www.nist.gov/dads/HTML/radixsort.html) works by looking at some portion of a key, sorting all entries based on
 that portion, then taking another pass and look at the next portion, and so on until
 the whole of the keys, or as much as is necessary, have been processed.
 
@@ -266,9 +266,9 @@ consequently a group of eight bits is represented by two such symbols.
 If you consider this table, with the four 8-bit wide columns marked *A* through *D*, there's a choice to be made;
 if we're going to process these keys top to bottom, one column at a time, _in which order do we process the columns_?
 
-This choice gives rise to the _two main classes_ of radix sorts, those that are _Least Significant Bits_ (LSB)
-first and those that are _Most Significant Bits_ (MSB) first. Sometimes 'digit' is substituted for 'bits',
-it's the same thing.
+This choice gives rise to the _two main classes_ of radix sorts, those that are _Least Significant Bits_ (LSB, _bottom-up_)
+first and those that are _Most Significant Bits_ (MSB, [_top-down_](https://www.nist.gov/dads/HTML/topdownRadixSort.html)) first.
+Sometimes 'digit' is substituted for 'bits', it's the same thing.
 
 If you have prior experience you may already know that, based on the material presented so far,
 we're going down the LSB path, meaning we'll process the columns from right to left; D, C, B, A.
