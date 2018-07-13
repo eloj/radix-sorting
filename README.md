@@ -607,12 +607,18 @@ dynamic selection of radix widths.
 
 ### <a name="cpu-bugs"></a> CPU Bugs
 
-The numbers quoted in the [motivation](#motivation) were taken on intel microcode 06-3a-09 version 0x1c. A later
+The numbers quoted in the [motivation](#motivation) were taken on intel microcode 06-3a-09 version 0x1c (Ivy Bridge). A later
 update to 0x1f (dated 2018-02-07), issued to mitigate [Spectre](https://en.wikipedia.org/wiki/Spectre_(security_vulnerability))
-and [Meltdown](https://en.wikipedia.org/wiki/Meltdown_(security_vulnerability)), decreased performance _significantly_.
-The ~460ms radix sort now took ~630ms, and the `std::sort` went from 3.5s to 5s.
+and [Meltdown](https://en.wikipedia.org/wiki/Meltdown_(security_vulnerability)), possibly in combination with linux kernel changes,
+decreased performance _significantly_. The ~460ms radix sort now took ~630ms, and the `std::sort` went from 3.5s to 5s.
 
-_TODO: Determine if huge-pages helps_
+Unfortunately I have not been able to pinpoint the exact reason for this large performance delta. My initial hypothesis
+was that it was due to increased cost of [TLB](https://en.wikipedia.org/wiki/Translation_lookaside_buffer) interactions due
+to [Kernel page-table isolation](https://en.wikipedia.org/wiki/Kernel_page-table_isolation) (KPTI), but then I would expect
+to get _some_ performance back from using hugepages, which I did not.
+
+Ivy Bridge does lack INVPCID which [makes it take an extra hit from the Meltdown mitigations](https://arstechnica.com/gadgets/2018/01/heres-how-and-why-the-spectre-and-meltdown-patches-will-hurt-performance/),
+so this is still probably the reason, and I was wrong to think hugepages would help with this.
 
 ### <a name="compiler-issues"></a> Compiler issues
 
