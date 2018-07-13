@@ -655,8 +655,8 @@ _TODO: This code is very much a work in progress, used to test various technique
 
 _TODO_
 
-+ Bucket sort
-+ American Flag Sort
++ Buc--ket sort
++ Ame--rican Flag Sort
 
 ## Miscellaneous
 
