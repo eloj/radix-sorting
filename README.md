@@ -46,7 +46,7 @@ All code is provided under the [MIT License](LICENSE).
 This code can sort 40 million 32-bit integers in under half a second using a single
 core of an [Intel i5-3570T](https://ark.intel.com/products/65521/Intel-Core-i5-3570T-Processor-6M-Cache-up-to-3_30-GHz),
 a low-TDP CPU from 2012 using DDR3-1333. `std::sort` requires ~3.5s for the same task (with the
-caveat that it's _in-place_).
+caveat that it's _in-place_, and see [CPU Bugs](#cpu-bugs) for an update).
 
 ## <a name="counting-sort"></a> From the top; Counting sort
 
@@ -614,11 +614,11 @@ decreased performance _significantly_. The ~460ms radix sort now took ~630ms, an
 
 Unfortunately I have not been able to pinpoint the exact reason for this large performance delta. My initial hypothesis
 was that it was due to increased cost of [TLB](https://en.wikipedia.org/wiki/Translation_lookaside_buffer) interactions due
-to [Kernel page-table isolation](https://en.wikipedia.org/wiki/Kernel_page-table_isolation) (KPTI), but then I would expect
-to get _some_ performance back from using hugepages, which I did not.
+to Meltdown mitigations, including [Kernel page-table isolation](https://en.wikipedia.org/wiki/Kernel_page-table_isolation) (KPTI),
+but then I would expect to get _some_ performance back from using hugepages, which I did not.
 
 Ivy Bridge does lack INVPCID which [makes it take an extra hit from the Meltdown mitigations](https://arstechnica.com/gadgets/2018/01/heres-how-and-why-the-spectre-and-meltdown-patches-will-hurt-performance/),
-so this is still probably the reason, and I was wrong to think hugepages would help with this.
+so this is still probably the reason, and I was simply wrong to think hugepages would help with this.
 
 ### <a name="compiler-issues"></a> Compiler issues
 
