@@ -493,8 +493,8 @@ This is often a part of MSB radix sorts.
 
 It's also possible to do one MSB pass and then LSB sort the sub-results. This saves
 memory and memory management from doing all MSB passes, and should improve cache
-locality for the LSB passes. That said, in the one implementation I've tried, the
-fixed overhead was quite high. (_TODO: determine exact reason_)
+locality for the LSB passes. In the one implementation I've tried, the
+fixed overhead was quite high. (_TODO: experiment/determine exact reason_)
 
 ### <a name="sort-detection"></a> Pre-sorted detection
 
@@ -555,6 +555,9 @@ passes at once comes naturally when writing the radix sort in the _unrolled_ for
 It may be possible to efficiently do the histogramming for the _next pass_
 within the sort loop of the _current pass_, reducing the memory
 footprint to two histogram buffers in the unrolled form.
+
+That said, it's hard to imagine a scenario where this would be a win on a typical
+"big CPU" system where memory and cache is plentiful and prefetching efficient.
 
 ### <a name="key-rewriting"></a> Key rewriting
 
