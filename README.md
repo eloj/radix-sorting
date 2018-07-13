@@ -547,13 +547,14 @@ to the result, rather than add a copy step.
 
 ### <a name="histogram-memory"></a> Histogram memory
 
-Pre-calulating the histograms for multiple radixes at one time is not strictly necessary
-since the counts aren't affected by the sorting, Memory can be saved by calculating only
-the histogram(s) you need for the next pass or two.
+Unlike a typical implementation, which would likely repeatedly call
+a counting sort and therefore need as many histogramming passes as there are
+sorting passes, the idea of pre-calulating the histograms for multiple sorting
+passes at once comes naturally when writing the radix sort in the _unrolled_ form.
 
-In the simplest case this results in one extra pass through the data per radix, minus
-one, but you could try and put the counting inside the sort loop _prior_ to the one
-where you need the prefix sums, and ping-pong two histogram buffers.
+It may be possible to efficiently do the histogramming for the _next pass_
+within the sort loop of the _current pass_, reducing the memory
+footprint to two histogram buffers in the unrolled form.
 
 ### <a name="key-rewriting"></a> Key rewriting
 
