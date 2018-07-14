@@ -570,7 +570,7 @@ to the result, rather than add a copy step.
 
 Unlike a typical implementation, which would likely repeatedly call
 a counting sort and therefore need as many histogramming passes as there are
-sorting passes, the idea of pre-calulating the histograms for multiple sorting
+sorting passes, the idea of pre-calculating the histograms for multiple sorting
 passes at once comes naturally when writing the radix sort in the _unrolled_ form.
 
 It may be possible to efficiently do the histogramming for the _next pass_
