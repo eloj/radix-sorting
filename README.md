@@ -143,11 +143,11 @@ output from the counts. Instead the counts are re-processed into a series of pre
 second loop. This gives us, for each input value, its first location in the sorted output array, i.e
 the value of `cnt[j]` tells us the array index at which to write the first _j_ to the output.
 
-<blockquote><p>A <a href="https://en.wikipedia.org/wiki/Prefix_sum ">prefix sum</a> implies addition. It's derived from a
-higher-order construction called a <em>scan</em> which allows for any binary associative operator. Furthermore
-the term is slightly ambiguous, because there are two variants; the <em>inclusive</em> and the <em>exclusive</em>
-prefix sum/scan. We're using an exclusive scan, because for element <em>j</em> we're summing the elements up to
-but not including the <em>j:th</em> position. We use zero as an identity for the first sum.</p></blockquote>
+A [prefix sum](https://en.wikipedia.org/wiki/Prefix_sum) implies addition. It's derived from a
+higher-order construction called a _scan_ which allows for any binary associative operator. Furthermore
+the term is slightly ambiguous, because there are two variants; the _inclusive_ and the _exclusive_
+prefix sum/scan. We're using an exclusive scan, because for position _j_ we're summing
+the elements up to but not including _j_. We use zero as an identity for the first sum.
 
 For instance, `cnt[0]` will always be zero, because any `0` will always end up in the first
 position in the output. `cnt[1]` will contain how many zeroes precede the first `1`, `cnt[2]` will
