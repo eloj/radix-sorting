@@ -139,9 +139,15 @@ We have introduced a separate output array, which means we are no longer _in-pla
 array is required; the algorithm would break if we tried to write directly into the input array.
 
 However, the _main_ difference between this and the first variant is that we're no longer directly writing the
-output from the counts. Instead the counts are re-processed into a series of prefix sums (sometimes called a _scan_) in the
+output from the counts. Instead the counts are re-processed into a series of prefix sums in the
 second loop. This gives us, for each input value, its first location in the sorted output array, i.e
 the value of `cnt[j]` tells us the array index at which to write the first _j_ to the output.
+
+<blockquote><p>A <a href="https://en.wikipedia.org/wiki/Prefix_sum ">prefix sum</a> implies addition. It's derived from a
+higher-order construction called a <em>scan</em> which allows for any binary associative operator. Furthermore
+the term is slightly ambiguous, because there are two variants; the <em>inclusive</em> and the <em>exclusive</em>
+prefix sum/scan. We're using an exclusive scan, because for element <em>j</em> we're summing the elements up to
+but not including the <em>j:th</em> position. We use zero as an identity for the first sum.</p></blockquote>
 
 For instance, `cnt[0]` will always be zero, because any `0` will always end up in the first
 position in the output. `cnt[1]` will contain how many zeroes precede the first `1`, `cnt[2]` will
@@ -155,7 +161,7 @@ Because we are processing the input entries in order, from the lowest to the hig
 this order when we write them out, this sort is in essence _stable_. That said, it's a bit of a pointless distinction
 since we're treating each input entry, as a whole, as the key.
 
-With a few basic modifications, we arrive at
+With a few basic modifications, we arrive at:
 
 <a name="listing_csrec"></a>[Listing 3](counting_sort_rec_sk.c):
 
