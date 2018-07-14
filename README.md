@@ -496,10 +496,14 @@ These of course extends naturally to 64-bit keys.
 
 ## <a name="optimizations"></a> Optimizations
 
-_TODO: This section very much a work in progress/TBD thing_
-
 In this section I'll talk about some optimizations that I have tried, or
 that may be worth investigating.
+
+At this point it must be noted that none of the code in this repository
+even attempts to defeat [side-channel leaks](https://en.wikipedia.org/wiki/Side-channel_attack),
+and some of the following optimizations add data-dependencies that will definitely open
+the door for [timing attacks](https://en.wikipedia.org/wiki/Timing_attack) should
+you apply them to a cryptographic context.
 
 ### <a name="hybrids"></a> Hybrids
 
