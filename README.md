@@ -42,6 +42,7 @@ All code is provided under the [MIT License](LICENSE).
     + [CPU Bugs](#cpu-bugs)
     + [Compiler issues](#compiler-issues)
 + [C++ Implementation](#cpp-implementation)
++ [Contributors](#contributors)
 + [Resources](#resources)
 
 ## <a name="motivation"></a> Motivation
@@ -665,6 +666,10 @@ _TODO_
 ## Miscellaneous
 
 * Asserting on histogram counter overflow.
+
+## <a name="contributors"></a> Contributors
+
+* Eddy Jansson - [@el0j](https://twitter.com/el0j) - [github](https://github.com/eloj)
 
 ## <a name="resources"></a> Resources
 
