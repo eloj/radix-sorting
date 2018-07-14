@@ -472,7 +472,7 @@ These can be combined to handle signed integers in descending order:
 
 ### <a name="float-keys"></a>Floating point keys
 
-To sort IEEE 754 single-precision (32-bit) floats (a.k.a _binary32_) in their natural order we need to invert the key if the sign-bit is set, else we need to flip the sign bit. (via [Radix Tricks](http://stereopsis.com/radix.html)):
+To sort IEEE 754 single-precision (32-bit) floats (a.k.a [binary32](https://en.wikipedia.org/wiki/Single-precision_floating-point_format)) in their natural order we need to invert the key if the sign-bit is set, else we need to flip the sign bit. (via [Radix Tricks](http://stereopsis.com/radix.html)):
 
 ```c
 	return key ^ (-((uint32_t)key >> 31) | 0x80000000); // 32-bit float
