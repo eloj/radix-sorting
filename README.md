@@ -139,15 +139,9 @@ We have introduced a separate output array, which means we are no longer _in-pla
 array is required; the algorithm would break if we tried to write directly into the input array.
 
 However, the _main_ difference between this and the first variant is that we're no longer directly writing the
-output from the counts. Instead the counts are re-processed into a series of prefix sums in the
-second loop. This gives us, for each input value, its first location in the sorted output array, i.e
+output from the counts. Instead the counts are re-processed into a [prefix sum](https://en.wikipedia.org/wiki/Prefix_sum)
+(or _exclusive scan_) in the second loop. This gives us, for each input value, its first location in the sorted output array, i.e
 the value of `cnt[j]` tells us the array index at which to write the first _j_ to the output.
-
-A [prefix sum](https://en.wikipedia.org/wiki/Prefix_sum) implies addition. It's derived from a
-higher-order construction called a _scan_ which allows for any binary associative operator. Furthermore
-the term is slightly ambiguous, because there are two variants; the _inclusive_ and the _exclusive_
-prefix sum/scan. We're using an exclusive scan, because for position _j_ we're summing
-the elements up to but not including _j_. We use zero as an identity for the first sum.
 
 For instance, `cnt[0]` will always be zero, because any `0` will always end up in the first
 position in the output. `cnt[1]` will contain how many zeroes precede the first `1`, `cnt[2]` will
