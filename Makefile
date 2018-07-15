@@ -72,8 +72,8 @@ radix_sort_u32: radix_sort_u32.c
 radix_sort_u64_multipass: radix_sort_u64_multipass.c
 	$(CC) $(CFLAGS) $< -o $@
 
-radix: radix.cpp
-	$(CXX) $(CXXFLAGS) -DVERIFY_SORT radix.cpp -o $@
+radix: radix_experiment.cpp radix_sort.hpp
+	$(CXX) $(CXXFLAGS) -DVERIFY_SORT radix_experiment.cpp -o $@
 
 genkeys: 40M_32bit_keys.dat
 
