@@ -460,13 +460,13 @@ at the end of the result. Using the [xor operator](https://en.wikipedia.org/wiki
 neatly solves the problem:
 
 ```c
-	return key ^ 0x80000000; // signed 32-bit (asc)
+	return key ^ (1L << 31); // signed 32-bit (asc)
 ```
 
 These can be combined to handle signed integers in descending order:
 
 ```c
-	return ~(key ^ 0x80000000); // signed 32-bit (desc)
+	return ~(key ^ (1L << 31)); // signed 32-bit (desc)
 ```
 
 ### <a name="float-keys"></a>Floating point keys
@@ -474,8 +474,14 @@ These can be combined to handle signed integers in descending order:
 To sort IEEE 754 single-precision (32-bit) floats (a.k.a [binary32](https://en.wikipedia.org/wiki/Single-precision_floating-point_format)) in their natural order we need to invert the key if the sign-bit is set, else we need to flip the sign bit. (via [Radix Tricks](http://stereopsis.com/radix.html)):
 
 ```c
-	return key ^ (-((uint32_t)key >> 31) | 0x80000000); // 32-bit float
+	return key ^ (-(key >> 31) | (1L << 31)); // 32-bit float (asc)
 ```
+
+This looks complex, but the right hand of the parenthetical converts a set sign-bit to an all-set bitmask (-1 equals ~0) which causes the `xor` to
+invert the whole key. The second expression in the parenthtical (after the `or`) sets the sign bit, which is a no-op if it was already set, but
+otherwise ensures that the `xor` flips the sign-bit only.
+
+As an implementation detail for C and C++, `key` is the floating point key reinterpreted (cast) as an unsigned 32-bit integer, this in order for the bit-manipulation to be allowed.
 
 Example for sorting `{ 128.0f, 646464.0f, 0.0f, -0.0f, -0.5f, 0.5f, -128.0f, -INFINITY, NAN, INFINITY }`:
 
@@ -492,7 +498,9 @@ Example for sorting `{ 128.0f, 646464.0f, 0.0f, -0.0f, -0.5f, 0.5f, -128.0f, -IN
 00000009: 7fc00000 nan
 ```
 
-These of course extends naturally to 64-bit keys.
+So yes, you can sort with NaNs. Isn't life great?
+
+All of these of course extends naturally to 64-bit keys, just change the shifts from 31 to 63 and adjust the types involved accordingly.
 
 ## <a name="optimizations"></a> Optimizations
 
