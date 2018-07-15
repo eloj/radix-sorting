@@ -40,7 +40,6 @@ All code is provided under the [MIT License](LICENSE).
     + [Vectorized histogramming](#vectorization)
     + [Wider or narrower radix](#radix-width)
     + [CPU Bugs](#cpu-bugs)
-    + [Compiler issues](#compiler-issues)
 + [C++ Implementation](#cpp-implementation)
 + [Contributors](#contributors)
 + [Resources](#resources)
@@ -504,7 +503,7 @@ At this point it must be noted that none of the code in this repository
 even attempts to defeat [side-channel leaks](https://en.wikipedia.org/wiki/Side-channel_attack),
 and some of the following optimizations add data-dependencies that will definitely open
 the door for [timing attacks](https://en.wikipedia.org/wiki/Timing_attack) should
-you apply them to a cryptographic context.
+you apply them in a cryptographic context.
 
 ### <a name="hybrids"></a> Hybrids
 
@@ -624,7 +623,7 @@ For other architectures this may be more viable.
 Using multiples of eight bits for the radix is convenient, but not required. If we do,
 we limit ourselves to 8-bit or 16-bit wide radixes in practice. Using an intermediate size such as 11-bits
 with three passes saves us one pass for every 32-bits of key, but also makes it less likely
-for the column skipping to kick in and may add some masking operations.
+for the column skipping to kick in, and adds a few extra masking operations.
 
 Going narrower could allow us to skip more columns in common workloads. There's definitely
 room for experimentation in this area, maybe even trying non-uniformly wide radixes (8-16-8) or
@@ -638,16 +637,12 @@ and [Meltdown](https://en.wikipedia.org/wiki/Meltdown_(security_vulnerability)),
 decreased performance _significantly_. The ~460ms radix sort now took ~630ms, and the `std::sort` went from 3.5s to 5s.
 
 Unfortunately I have not been able to pinpoint the exact reason for this large performance delta. My initial hypothesis
-was that it was due to increased cost of [TLB](https://en.wikipedia.org/wiki/Translation_lookaside_buffer) interactions due
+was that it could be attributed to increased cost of [TLB](https://en.wikipedia.org/wiki/Translation_lookaside_buffer) interactions due
 to Meltdown mitigations, including [Kernel page-table isolation](https://en.wikipedia.org/wiki/Kernel_page-table_isolation) (KPTI),
 but then I would expect to get _some_ performance back from using hugepages, which I did not.
 
 Ivy Bridge does lack INVPCID which [makes it take an extra hit from the Meltdown mitigations](https://arstechnica.com/gadgets/2018/01/heres-how-and-why-the-spectre-and-meltdown-patches-will-hurt-performance/),
 so this is still probably the reason, and I was simply wrong to think hugepages would help with this.
-
-### <a name="compiler-issues"></a> Compiler issues
-
-_TODO_: Very suspectible to compiler optimization (check << 3 vs * 8 again), GCC-latest vs GCC5 or older...
 
 ## <a name="cpp-implementation"></a> C++ Implementation
 
