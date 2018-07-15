@@ -11,6 +11,8 @@
 #include <cassert>
 #include <algorithm>
 
+#include "radix_sort.hpp"
+
 #ifdef MMAP
 #include <sys/mman.h> // for mmap
 #endif
@@ -53,11 +55,11 @@ void print_sort(T *keys, size_t n) {
 	}
 }
 
-template <typename T, typename KeyFunc>
-size_t verify_sort_kf(T *keys, size_t n, KeyFunc kf) {
+template <typename T>
+size_t verify_sort_kf(T *keys, size_t n) {
 	printf("Verifying sort... ");
 	for (size_t i = 1 ; i < n ; ++i) {
-		if (kf(keys[i-1]) > kf(keys[i])) {
+		if (keys[i-1] > keys[i]) {
 			printf("Sort if array at %p invalid.\n", keys);
 			printf("%zu: %" PRIx64 " > ", i-1, (uint64_t)keys[i-1]);
 			printf("%zu: %" PRIx64 "\n", i, (uint64_t)keys[i]);
@@ -67,79 +69,6 @@ size_t verify_sort_kf(T *keys, size_t n, KeyFunc kf) {
 	printf("OK.\n");
 
 	return 0;
-}
-
-template <typename T, typename KeyFunc>
-T* radix_sort(T * RESTRICT src, T * RESTRICT aux, size_t n, KeyFunc && kf) {
-	constexpr int wc = sizeof(T);
-	size_t hist[wc][256] = { }; // 8K/16K of histograms
-	int cols[wc];
-	int ncols = 0;
-
-	if (n < 2)
-		return src;
-
-//	printf("wc=%d\n", wc);
-
-	size_t n_unsorted = n;
-
-	// Histograms
-	for (size_t i = 0 ; i < n ; ++i) {
-#if 1
-		// pre-sorted detection
-		if ((i < n - 1) && (kf(src[i]) <= kf(src[i+1]))) {
-			--n_unsorted;
-		}
-#endif
-		for (int j=0 ; j < wc ; ++j) {
-			++hist[j][(kf(src[i]) >> (j << 3)) & 0xFF];
-		}
-	}
-
-#if 1
-	// printf("n_unsorted=%zu\n", n_unsorted);
-	if (n_unsorted < 2)
-		return src;
-#endif
-
-	// Sample first key to determine if any columns can be skipped
-	ncols = 0;
-	T key0 = kf(*src);
-	for (int i = 0 ; i < wc ; ++i) {
-		if (hist[i][(key0 >> (i << 3)) & 0xFF] != n) {
-			cols[ncols++] = i;
-		}
-	}
-
-#if 0
-	printf("ncols=%d\n", ncols);
-	for (int i = 0 ; i < ncols ; ++i) {
-		printf("cols[%d] = %d\n", i, cols[i]);
-	}
-#endif
-
-	// Calculate offsets (prefix sums)
-	for (int i = 0 ; i < ncols ; ++i) {
-		size_t a = 0;
-		for (int j = 0 ; j < 256 ; ++j) {
-			size_t b = hist[cols[i]][j];
-			hist[cols[i]][j] = a;
-			a += b;
-		}
-	}
-
-	// Radix sort
-	for (int i = 0 ; i < ncols ; ++i) {
-		for (size_t j = 0 ; j < n ; ++j) {
-			T k = src[j];
-			size_t dst = hist[cols[i]][(kf(k) >> (cols[i] << 3)) & 0xFF]++;
-			aux[dst] = k;
-
-		}
-		std::swap(src, aux);
-	}
-
-	return src; // This can be either src or aux buffer, depending on odd/even number of columns sorted.
 }
 
 template <typename T>
@@ -153,15 +82,7 @@ int test_radix_sort(T* src, size_t n, struct timespec *tp_start, struct timespec
 	T *aux = (T*)mmap(NULL, n*4, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS | flags, -1, 0);
 #endif
 
-	auto key_df = [](const T& entry) __attribute__((pure, hot)) {
-		return entry;  // unsigned (asc)
-		// return ~entry; // unsigned (desc)
-		// return entry ^ 0x80000000; // signed (asc)
-		// return ~(entry ^ 0x80000000); // signed (desc)
-		// return entry ^ (-((uint32_t)entry >> 31) | 0x80000000); // float (if sign-bit; invert, else flip sign-bit)
-	};
-
-	auto *sorted = radix_sort(src, aux, n, key_df);
+	auto *sorted = radix_sort(src, aux, n, true);
 
 	if (sorted == aux) {
 		printf("Copying aux buffer.\n");
@@ -175,7 +96,7 @@ int test_radix_sort(T* src, size_t n, struct timespec *tp_start, struct timespec
 		clock_gettime(CLOCK_MONOTONIC_RAW, tp_end);
 
 #ifdef VERIFY_SORT
-	if (verify_sort_kf(src, n, key_df) != 0) {
+	if (verify_sort_kf(src, n) != 0) {
 		return 1;
 	}
 #endif
@@ -244,13 +165,6 @@ int main(int argc, char *argv[])
 	for (size_t i=0 ; i < n ; ++i) {
 		src[i] &= 0x00FFFFFF;
 	}
-#endif
-
-#if 0
-	// Small test for floats. Note that underlying type should remain uintXX_t, hence copy
-	float f[] = { 128.0f, 646464.0f, 0.0f, -0.0f, -0.5f, 0.5f, -128.0f, -INFINITY, NAN, INFINITY};
-	memcpy(src, f, sizeof(f));
-	n = sizeof(f)/sizeof(f[0]);
 #endif
 
 	struct timespec tp_start;
