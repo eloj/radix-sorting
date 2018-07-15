@@ -434,12 +434,8 @@ For sorting floats, doubles or other fixed-width keys, or changing the sort orde
 we can still use the LSB implementation as-is. The trick is to map the keys onto
 the unsigned integers.
 
-We have seen the use of a function (e.g `key_of`), first in order to generalize sorting to different
-types of input records, and secondly as a means to sort in multiple passes by down-shifting the key.
-This function is sometimes refered to as a _key-extraction_ function.
-
-I'll use the term _key-derivation_ function instead, because we're not only extracting different
-parts of a key; using this function to manipulate the key in different ways, _to derive a sort key_,
+I'll use the term _key-derivation_ for this, because we're not only extracting different
+parts of a key; using this function to manipulate the key in different ways to derive a sort key
 is how we're able to handle signed integers, floating point keys, and chose a sort order.
 
 ### <a name="ordering"></a> Sort order
