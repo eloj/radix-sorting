@@ -197,7 +197,7 @@ The primary modification to the sorting function is the small addition of a func
 the key for a given record.
 
 The main insight you should take away from this is that if the things we're sorting aren't themselves the
-keys but some composed type, we just need some way to _extract_ or _derive_ a key for each entry instead.
+keys but (pointers to) some composed type, we just need some way to _extract_ or _derive_ a key for each entry instead.
 
 We're still restricted to integer keys. We rely on there being some sort of mapping from our records (or _entries_)
 to the integers which orders the records the way we require.
@@ -473,8 +473,8 @@ To sort IEEE 754 single-precision (32-bit) floats (a.k.a [binary32](https://en.w
 	return key ^ (-(key >> 31) | (1L << 31)); // 32-bit float (asc)
 ```
 
-This looks complex, but the right hand of the parenthetical converts a set sign-bit to an all-set bitmask (-1 equals ~0) which causes the `xor` to
-invert the whole key. The second expression in the parenthtical (after the `or`) sets the sign bit, which is a no-op if it was already set, but
+This looks complex, but the left side of the parenthetical converts a set sign-bit to an all-set bitmask (-1 equals ~0) which causes the `xor` to
+invert the whole key. The second expression in the parenthetical (after the bitwise or) sets the sign bit, which is a no-op if it was already set, but
 otherwise ensures that the `xor` flips the sign-bit only.
 
 As an implementation detail for C and C++, `key` is the floating point key reinterpreted (cast) as an unsigned 32-bit integer, this in order for the bit-manipulation to be allowed.
@@ -542,7 +542,7 @@ histogram loop.
 
 ### <a name="column-skipping"></a >Column skipping
 
-If every radix for a column is the same, then the sort loop for that column will
+If every key radix for a column has the same value, then the sort loop for that column will
 simply be a copy from one buffer to another, which is a waste.
 
 Fortunately detecting this is easy, you don't even have to scan through the
