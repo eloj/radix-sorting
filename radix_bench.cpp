@@ -11,8 +11,8 @@
 #include <benchmark/benchmark.h>
 #include "radix_sort.hpp"
 
-uint32_t *org_data = NULL;
-size_t org_num = 0;
+static void *org_data;
+static size_t org_size;
 
 static void* read_file(const char *filename, size_t *limit) {
 	void *keys = NULL;
@@ -28,7 +28,7 @@ static void* read_file(const char *filename, size_t *limit) {
 			bytes = *limit;
 
 		printf("Allocating and reading %zu bytes.\n", bytes);
-		keys = malloc(bytes * 2);
+		keys = malloc(bytes);
 
 		long rnum = fread(keys, bytes, 1, f);
 		fclose(f);
@@ -47,30 +47,36 @@ class FileSort : public ::benchmark::Fixture {
 public:
 	void SetUp(const ::benchmark::State& state) {
 		if (!org_data) {
-			org_num = 0;
-			org_data = (T*)read_file("40M_32bit_keys.dat", &org_num);
+			org_data = (T*)read_file("40M_32bit_keys.dat", &org_size);
+			assert(org_data);
 		}
+		this->max_n = org_size / sizeof(T);
 		this->n = state.range(0);
-		assert(n <= org_num); // sorting range overflow
-		this->src = new T[n];
-		this->aux = new T[n];
-		memcpy(this->src, org_data, sizeof(T) * n);
+		if (n <= max_n) {
+			this->src = new T[n];
+			this->aux = new T[n];
+			memcpy(this->src, org_data, sizeof(T) * n);
+		}
 	}
 
 	void TearDown(const ::benchmark::State&) {
 		delete[](this->src);
 		delete[](this->aux);
+		this->src = this->aux = NULL;
 	}
 
 	T *src;
 	T *aux;
 	size_t n;
+	size_t max_n;
 };
 
 
 using FSu32 = FileSort<uint32_t>;
 
 BENCHMARK_DEFINE_F(FSu32, radix_sort)(benchmark::State &state) {
+	if (n > max_n)
+		state.SkipWithError("Not enough source data to benchmark!");
 	for (auto _ : state) {
 		auto *sorted = radix_sort(src, aux, n, true);
 	}
@@ -78,6 +84,8 @@ BENCHMARK_DEFINE_F(FSu32, radix_sort)(benchmark::State &state) {
 }
 
 BENCHMARK_DEFINE_F(FSu32, StdSort)(benchmark::State &state) {
+	if (n > max_n)
+		state.SkipWithError("Not enough source data to benchmark!");
 	for (auto _ : state) {
 		std::sort(src, src + n);
 	}
