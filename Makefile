@@ -75,10 +75,13 @@ radix_sort_u64_multipass: radix_sort_u64_multipass.c
 radix: radix_experiment.cpp radix_sort.hpp
 	$(CXX) $(CXXFLAGS) -DVERIFY_SORT radix_experiment.cpp -o $@
 
+radix_bench: radix_bench.cpp
+	$(CXX) $(CXXFLAGS) $< -lbenchmark -pthread -o $@
+
 genkeys: 40M_32bit_keys.dat
 
 40M_32bit_keys.dat:
 	dd if=/dev/urandom bs=1024 count=156250 of=$@
 
 clean:
-	rm -f radix counting_sort_8 counting_sort_8s counting_sort_rec_sk radix_sort_u32 radix_sort_u64_multipass core.* *.gcda
+	rm -f radix counting_sort_8 counting_sort_8s counting_sort_rec_sk radix_sort_u32 radix_sort_u64_multipass radix_bench core.* *.gcda
