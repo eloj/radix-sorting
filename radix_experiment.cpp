@@ -117,8 +117,8 @@ static void* read_file(const char *filename, size_t *limit, int use_mmap) {
 		if (*limit > 0 && *limit < bytes)
 			bytes = *limit;
 
-		if (use_mmap) {
 #if MMAP
+		if (use_mmap) {
 			int flags = MAP_HUGETLB | MAP_NORESERVE; // | MAP_HUGE_2MB; // MAP_NORESERVE
 			keys = mmap(NULL, bytes, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS | flags, -1, 0);
 			if (!keys || (keys == MAP_FAILED)) {
@@ -126,13 +126,13 @@ static void* read_file(const char *filename, size_t *limit, int use_mmap) {
 				return NULL;
 			}
 			printf("Mapping memory at %p, reading %zu bytes.\n", keys, bytes);
-#else
-			static_assert("mmap not available!");
-#endif
 		} else {
-			printf("Allocating and reading %zu bytes.\n", bytes);
-			keys = malloc(bytes * 2);
+#endif
+		printf("Allocating and reading %zu bytes.\n", bytes);
+		keys = malloc(bytes * 2);
+#if MMAP
 		}
+#endif
 		long rnum = fread(keys, bytes, 1, f);
 		fclose(f);
 		if (rnum != 1) {
