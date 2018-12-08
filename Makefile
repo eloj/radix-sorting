@@ -57,6 +57,9 @@ opt: clean
 test: radix
 	${TEST_PREFIX} ./radix $N
 
+bench: radix_bench genkeys
+	./radix_bench --benchmark_counters_tabular=true
+
 counting_sort_8: counting_sort_8.c
 	$(CC) $(CFLAGS) $< -o $@
 

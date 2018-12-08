@@ -5,7 +5,6 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#include <cinttypes>
 #include <algorithm>
 
 #include <benchmark/benchmark.h>
@@ -45,6 +44,8 @@ static void* read_file(const char *filename, size_t *limit) {
 template <typename T>
 class FileSort : public ::benchmark::Fixture {
 public:
+	typedef T value_type;
+
 	void SetUp(const ::benchmark::State& state) {
 		if (!org_data) {
 			org_data = (T*)read_file("40M_32bit_keys.dat", &org_size);
@@ -59,7 +60,7 @@ public:
 		}
 	}
 
-	void TearDown(const ::benchmark::State&) {
+	void TearDown(const ::benchmark::State& state) {
 		delete[](this->src);
 		delete[](this->aux);
 		this->src = this->aux = NULL;
