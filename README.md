@@ -659,7 +659,19 @@ _TODO: This code is very much a work in progress, used to test various technique
 
 The `bench` Make target will build and run a benchmark comparing the (WIP) C++ implementation against `std::sort` and stdlib `qsort`.
 
-This code is built on top of and requires the prior installation of the [Google benchmark](https://github.com/google/benchmark) microbenchmark support library.
+This code is built on top of and requires the prior installation of the [Google benchmark](https://github.com/google/benchmark) microbenchmark support library,
+which is available as `libbenchmark-dev` on Debian and Ubuntu.
+
+It's not worth talking about specific numbers at this point in time, but some general notes are in order.
+
+You will notice that there's a cut-off point, usually after a few hundred or so keys, where radix sort
+starts beating the other algorithms. This is due to the overhead of initializing and generating histograms.
+However, in practice we're more likely to care about performance when sorting a lot of keys vs sorting a few,
+and we can always implement a hybrid which switches to a sort with less fixed overhead when called with a
+small number of keys, giving us the best of both worlds.
+
+Because we're sorting random data, the column-skipping optimization is very unlikely to kick in, so while
+the benchmark is realistic, it is by no means a best-case scenario.
 
 ## MSB - The other path
 
