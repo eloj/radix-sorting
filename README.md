@@ -662,6 +662,8 @@ The `bench` Make target will build and run a benchmark comparing the (WIP) C++ i
 This code is built on top of and requires the prior installation of the [Google benchmark](https://github.com/google/benchmark) microbenchmark support library,
 which is available as `libbenchmark-dev` on Debian and Ubuntu.
 
+![Benchmark on i7-6700K](data/radix-benchmark-20181208-i7-6700k_256.png)
+
 It's not worth talking about specific numbers at this point in time, but some general notes are in order.
 
 You will notice that there's a cut-off point, usually after a few hundred or so keys, where radix sort
