@@ -78,7 +78,7 @@ radix_sort_u64_multipass: radix_sort_u64_multipass.c
 radix: radix_experiment.cpp radix_sort.hpp
 	$(CXX) $(CXXFLAGS) -DVERIFY_SORT radix_experiment.cpp -o $@
 
-radix_bench: radix_bench.cpp
+radix_bench: radix_bench.cpp radix_sort.hpp
 	$(CXX) $(CXXFLAGS) $< -lbenchmark -pthread -o $@
 
 genkeys: 40M_32bit_keys.dat

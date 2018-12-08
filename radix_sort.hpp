@@ -21,6 +21,7 @@ static T* radix_sort_internal(T * RESTRICT src, T * RESTRICT aux, size_t n, KeyF
 	int cols[wc];
 	int ncols = 0;
 
+	// The stack allocations will still be pretty slow, better to check before we get here.
 	if (n < 2)
 		return src;
 
@@ -77,6 +78,8 @@ static T* radix_sort_internal(T * RESTRICT src, T * RESTRICT aux, size_t n, KeyF
 }
 
 uint32_t* radix_sort(uint32_t * RESTRICT src, uint32_t * RESTRICT aux, size_t n, bool asc) {
+	if (n < 2)
+		return src;
 	if (asc) {
 		return radix_sort_internal<uint32_t>(src, aux, n, [](const uint32_t& entry) KEYFN_ATTR {
 			return entry;
@@ -89,6 +92,8 @@ uint32_t* radix_sort(uint32_t * RESTRICT src, uint32_t * RESTRICT aux, size_t n,
 }
 
 int32_t* radix_sort(int32_t * RESTRICT src, int32_t * RESTRICT aux, size_t n, bool asc) {
+	if (n < 2)
+		return src;
 	if (asc) {
 		return radix_sort_internal<int32_t>(src, aux, n, [](const int32_t& entry) KEYFN_ATTR {
 			return entry ^ (1L << 31);
@@ -101,6 +106,8 @@ int32_t* radix_sort(int32_t * RESTRICT src, int32_t * RESTRICT aux, size_t n, bo
 }
 
 float* radix_sort(float * RESTRICT src, float * RESTRICT aux, size_t n, bool asc) {
+	if (n < 2)
+		return src;
 	if (asc) {
 		return radix_sort_internal<float>(src, aux, n, [](const float &entry) KEYFN_ATTR {
 			uint32_t local = *reinterpret_cast<const uint32_t*>(&entry);

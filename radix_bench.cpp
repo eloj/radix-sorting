@@ -81,7 +81,8 @@ BENCHMARK_DEFINE_F(FSu32, radix_sort)(benchmark::State &state) {
 	for (auto _ : state) {
 		auto *sorted = radix_sort(src, aux, n, true);
 	}
-	state.SetBytesProcessed(static_cast<int64_t>(state.iterations()) * n);
+	state.counters["KeyRate"] = benchmark::Counter(static_cast<int64_t>(state.iterations()) * n, benchmark::Counter::kIsRate);
+	state.SetBytesProcessed(static_cast<int64_t>(state.iterations()) * n * sizeof(FSu32::value_type));
 }
 
 BENCHMARK_DEFINE_F(FSu32, StdSort)(benchmark::State &state) {
@@ -90,10 +91,11 @@ BENCHMARK_DEFINE_F(FSu32, StdSort)(benchmark::State &state) {
 	for (auto _ : state) {
 		std::sort(src, src + n);
 	}
-	state.SetBytesProcessed(static_cast<int64_t>(state.iterations()) * n);
+	state.counters["KeyRate"] = benchmark::Counter(static_cast<int64_t>(state.iterations()) * n, benchmark::Counter::kIsRate);
+	state.SetBytesProcessed(static_cast<int64_t>(state.iterations()) * n * sizeof(FSu32::value_type));
 }
 
-BENCHMARK_REGISTER_F(FSu32, radix_sort)->RangeMultiplier(8)->Range(8, 8 << 21);
-BENCHMARK_REGISTER_F(FSu32, StdSort)->RangeMultiplier(8)->Range(8, 8 << 21);
+BENCHMARK_REGISTER_F(FSu32, radix_sort)->Arg(1)->RangeMultiplier(8)->Range(8, 8 << 20)->Arg(40000000);
+BENCHMARK_REGISTER_F(FSu32, StdSort)->Arg(1)->RangeMultiplier(8)->Range(8, 8 << 20)->Arg(40000000);
 
 BENCHMARK_MAIN();
