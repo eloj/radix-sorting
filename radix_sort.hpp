@@ -1,5 +1,5 @@
 /*
-	C++ implementation of a 32-bit radix sort
+	WORK IN PROGRESS: C++ implementation of a 32-bit radix sort
 
 	See https://github.com/eloj/radix-sorting
 
@@ -7,11 +7,28 @@
 		Use template magic to select KeyFunc
 		Extend KeyFunc to take key-shift.
 		Add support for 64-bit types, directly or via keyshift.
+		Hybridization: Fallback to simpler sort at overhead limit.
 
 */
 
 #define RESTRICT __restrict__
 #define KEYFN_ATTR __attribute__((pure, hot))
+
+/*
+	'isort3'; J.L Bentley, "Programming Pearls", column 11.1, page 116.
+*/
+template<typename T>
+static void
+insert_sort(T *arr, size_t n) {
+	T x;
+	size_t j;
+	for (size_t i = 1 ; i < n ; ++i) {
+		x = arr[i];
+		for (j = i ; j > 0 && arr[j-1] > x ; --j)
+			arr[j] = arr[j-1];
+		arr[j] = x;
+	}
+}
 
 template <typename T, typename KeyFunc>
 static T* radix_sort_internal(T * RESTRICT src, T * RESTRICT aux, size_t n, KeyFunc && kf) {
@@ -81,6 +98,12 @@ uint32_t* radix_sort(uint32_t * RESTRICT src, uint32_t * RESTRICT aux, size_t n,
 	if (n < 2)
 		return src;
 	if (asc) {
+		/* Hybrid...
+		if (n <= 256) {
+			insert_sort(src, n);
+			return src;
+		}
+		*/
 		return radix_sort_internal<uint32_t>(src, aux, n, [](const uint32_t& entry) KEYFN_ATTR {
 			return entry;
 		});
