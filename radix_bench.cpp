@@ -42,17 +42,19 @@ static void* read_file(const char *filename, size_t *limit) {
 	return keys;
 }
 
-class FileU32 : public ::benchmark::Fixture {
+template <typename T>
+class FileSort : public ::benchmark::Fixture {
 public:
 	void SetUp(const ::benchmark::State& state) {
 		if (!org_data) {
 			org_num = 0;
-			org_data = (uint32_t*)read_file("40M_32bit_keys.dat", &org_num);
+			org_data = (T*)read_file("40M_32bit_keys.dat", &org_num);
 		}
 		this->n = state.range(0);
-		this->src = new uint32_t[n];
-		this->aux = new uint32_t[n];
-		memcpy(this->src, org_data, sizeof(uint32_t) * n);
+		assert(n <= org_num); // sorting range overflow
+		this->src = new T[n];
+		this->aux = new T[n];
+		memcpy(this->src, org_data, sizeof(T) * n);
 	}
 
 	void TearDown(const ::benchmark::State&) {
@@ -60,24 +62,29 @@ public:
 		delete[](this->aux);
 	}
 
-	uint32_t *src;
-	uint32_t *aux;
+	T *src;
+	T *aux;
 	size_t n;
 };
 
-BENCHMARK_DEFINE_F(FileU32, radix_sort)(benchmark::State &state) {
+
+using FSu32 = FileSort<uint32_t>;
+
+BENCHMARK_DEFINE_F(FSu32, radix_sort)(benchmark::State &state) {
 	for (auto _ : state) {
 		auto *sorted = radix_sort(src, aux, n, true);
 	}
+	state.SetBytesProcessed(static_cast<int64_t>(state.iterations()) * n);
 }
 
-BENCHMARK_DEFINE_F(FileU32, StdSort)(benchmark::State &state) {
+BENCHMARK_DEFINE_F(FSu32, StdSort)(benchmark::State &state) {
 	for (auto _ : state) {
 		std::sort(src, src + n);
 	}
+	state.SetBytesProcessed(static_cast<int64_t>(state.iterations()) * n);
 }
 
-BENCHMARK_REGISTER_F(FileU32, radix_sort)->RangeMultiplier(8)->Range(8, 8 << 21);
-BENCHMARK_REGISTER_F(FileU32, StdSort)->RangeMultiplier(8)->Range(8, 8 << 21);
+BENCHMARK_REGISTER_F(FSu32, radix_sort)->RangeMultiplier(8)->Range(8, 8 << 21);
+BENCHMARK_REGISTER_F(FSu32, StdSort)->RangeMultiplier(8)->Range(8, 8 << 21);
 
 BENCHMARK_MAIN();
