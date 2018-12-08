@@ -41,6 +41,7 @@ All code is provided under the [MIT License](LICENSE).
     + [Wider or narrower radix](#radix-width)
     + [CPU Bugs](#cpu-bugs)
 + [C++ Implementation](#cpp-implementation)
+    + [Benchmarks](#cpp-benchmark)
 + [Contributors](#contributors)
 + [Resources](#resources)
 
@@ -654,6 +655,10 @@ _TODO: This code is very much a work in progress, used to test various technique
 
 [radix_experiment.cpp](radix_experiment.cpp)
 
+### <a name="cpp-benchmark"></a> Benchmarks
+
+The `bench` Make target will build and run a benchmark comparing the (WIP) C++ implementation against `std::sort`. This code is built
+on top of and requires the prior installation of the [Google benchmark](https://github.com/google/benchmark) microbenchmark support library.
 
 ## MSB - The other path
 
