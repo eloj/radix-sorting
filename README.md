@@ -651,13 +651,15 @@ so this is still probably the reason, and I was simply wrong to think hugepages 
 
 ## <a name="cpp-implementation"></a> C++ Implementation
 
-_TODO: This code is very much a work in progress, used to test various techniques, and does NOT represent a final 'product'_
+_TODO: This code is very much a work in progress, used to test various techniques, and does NOT represent a final 'product'._
 
 [radix_experiment.cpp](radix_experiment.cpp)
 
 ### <a name="cpp-benchmark"></a> Benchmarks
 
 The `bench` Make target will build and run a benchmark comparing the (WIP) C++ implementation against `std::sort` and stdlib `qsort`.
+
+[radix_bench.cpp](radix_bench.cpp)
 
 This code is built on top of and requires the prior installation of the [Google benchmark](https://github.com/google/benchmark) microbenchmark support library,
 which is available as `libbenchmark-dev` on Debian and Ubuntu.
