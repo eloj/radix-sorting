@@ -129,7 +129,7 @@ static void* read_file(const char *filename, size_t *limit, int use_mmap) {
 		} else {
 #endif
 		printf("Allocating and reading %zu bytes.\n", bytes);
-		keys = malloc(bytes * 2);
+		keys = malloc(bytes);
 #if MMAP
 		}
 #endif
