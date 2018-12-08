@@ -95,7 +95,26 @@ BENCHMARK_DEFINE_F(FSu32, StdSort)(benchmark::State &state) {
 	state.SetBytesProcessed(static_cast<int64_t>(state.iterations()) * n * sizeof(FSu32::value_type));
 }
 
+static int qsort_u32(const void *p1, const void *p2) {
+	uint32_t a = *(uint32_t*)p1;
+	uint32_t b = *(uint32_t*)p2;
+	if (a < b)
+		return -1;
+	return (a > b) ? 1 : 0;
+}
+
+BENCHMARK_DEFINE_F(FSu32, QSort)(benchmark::State &state) {
+	if (n > max_n)
+		state.SkipWithError("Not enough source data to benchmark!");
+	for (auto _ : state) {
+		qsort(src, n, sizeof(*src), qsort_u32);
+	}
+	state.counters["KeyRate"] = benchmark::Counter(static_cast<int64_t>(state.iterations()) * n, benchmark::Counter::kIsRate);
+	state.SetBytesProcessed(static_cast<int64_t>(state.iterations()) * n * sizeof(FSu32::value_type));
+}
+
 BENCHMARK_REGISTER_F(FSu32, radix_sort)->Arg(1)->RangeMultiplier(8)->Range(8, 8 << 20)->Arg(40000000);
 BENCHMARK_REGISTER_F(FSu32, StdSort)->Arg(1)->RangeMultiplier(8)->Range(8, 8 << 20)->Arg(40000000);
+BENCHMARK_REGISTER_F(FSu32, QSort)->Arg(1)->RangeMultiplier(8)->Range(8, 8 << 20)->Arg(40000000);
 
 BENCHMARK_MAIN();

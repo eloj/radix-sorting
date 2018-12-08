@@ -657,8 +657,9 @@ _TODO: This code is very much a work in progress, used to test various technique
 
 ### <a name="cpp-benchmark"></a> Benchmarks
 
-The `bench` Make target will build and run a benchmark comparing the (WIP) C++ implementation against `std::sort`. This code is built
-on top of and requires the prior installation of the [Google benchmark](https://github.com/google/benchmark) microbenchmark support library.
+The `bench` Make target will build and run a benchmark comparing the (WIP) C++ implementation against `std::sort` and stdlib `qsort`.
+
+This code is built on top of and requires the prior installation of the [Google benchmark](https://github.com/google/benchmark) microbenchmark support library.
 
 ## MSB - The other path
 
