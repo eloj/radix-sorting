@@ -578,6 +578,13 @@ a counting sort and therefore need as many histogramming passes as there are
 sorting passes, the idea of pre-calculating the histograms for multiple sorting
 passes at once comes naturally when writing the radix sort in the _unrolled_ form.
 
+Reducing the size of the histograms by using the smallest counter type possible
+will have a positive performance impact due to better cache utilization.
+If you can get away with 32-bit or even 16-bit counters, it will almost certainly
+pay off. In an experiment, halving the histogram size by changing the counter type
+from `size_t` to `uint32_t` improved performance when sorting N<100 items by ~33%.
+This effect fades out as the input size grows in proportion to the histograms.
+
 It may be possible to efficiently do the histogramming for the _next pass_
 within the sort loop of the _current pass_, reducing the memory
 footprint to two histogram buffers in the unrolled form.
@@ -669,10 +676,10 @@ which is available as `libbenchmark-dev` on Debian and Ubuntu.
 It's not worth talking about specific numbers at this point in time, but some general notes are in order.
 
 You will notice that there's a cut-off point, usually after a few hundred or so keys, where radix sort
-starts beating the other algorithms. This is due to the overhead of initializing and generating histograms.
-However, in practice we're more likely to care about performance when sorting a lot of keys vs sorting a few,
-and we can always implement a hybrid which switches to a sort with less fixed overhead when called with a
-small number of keys, giving us the best of both worlds.
+starts beating the other algorithms. This is due to the overhead of initializing, generating and
+accessing histograms. In practice we're more likely to care about performance when sorting a lot of keys vs
+sorting a few, and we can always implement a hybrid which switches to a sort which handles small inputs better,
+giving us the best of both worlds.
 
 The cost of allocating the auxiliary sorting buffer is not included in the timings by default. If you care
 about that the benchmark can be easily updated to move the aux buffer allocation into the benchmark loop.
