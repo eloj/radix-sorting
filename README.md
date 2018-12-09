@@ -136,7 +136,7 @@ void counting_sort_8s(uint8_t *arr, uint8_t *aux, size_t n)
 }
 ```
 
-We have introduced a separate output array, which means we are no longer _in-place_. This auxillary
+We have introduced a separate output array, which means we are no longer _in-place_. This auxiliary
 array is required; the algorithm would break if we tried to write directly into the input array.
 
 However, the _main_ difference between this and the first variant is that we're no longer directly writing the
@@ -567,7 +567,7 @@ skipped.
 ```
 
 Skipping columns has the side-effect of the final sorted result ending up in either the
-original input buffer or the auxillary buffer, depending on whether you sorted an even
+original input buffer or the auxiliary buffer, depending on whether you sorted an even
 or odd number of columns. I prefer to have the sort function return the pointer
 to the result, rather than add a copy step.
 
@@ -673,6 +673,11 @@ starts beating the other algorithms. This is due to the overhead of initializing
 However, in practice we're more likely to care about performance when sorting a lot of keys vs sorting a few,
 and we can always implement a hybrid which switches to a sort with less fixed overhead when called with a
 small number of keys, giving us the best of both worlds.
+
+The cost of allocating the auxiliary sorting buffer is not included in the timings by default. If you care
+about that the benchmark can be easily updated to move the aux buffer allocation into the benchmark loop.
+In practice, repeated allocation and deallocation of the same-sized block is likely to be immaterial,
+especially when there is little other pressure on the memory allocator.
 
 Because we're sorting random data, the column-skipping optimization is very unlikely to kick in, so while
 the benchmark is realistic, it is by no means a best-case scenario.
