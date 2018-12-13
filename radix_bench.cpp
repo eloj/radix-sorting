@@ -10,6 +10,7 @@
 #include <benchmark/benchmark.h>
 #include "radix_sort.hpp"
 
+static const char *org_data_fn = "40M_32bit_keys.dat";
 static void *org_data;
 static size_t org_size;
 
@@ -26,7 +27,7 @@ static void* read_file(const char *filename, size_t *limit) {
 		if (*limit > 0 && *limit < bytes)
 			bytes = *limit;
 
-		printf("Allocating and reading %zu bytes.\n", bytes);
+		printf("Allocating and reading %zu bytes from '%s'.\n", bytes, filename);
 		keys = malloc(bytes);
 
 		long rnum = fread(keys, bytes, 1, f);
@@ -48,7 +49,7 @@ public:
 
 	void SetUp(const ::benchmark::State& state) {
 		if (!org_data) {
-			org_data = (T*)read_file("40M_32bit_keys.dat", &org_size);
+			org_data = (T*)read_file(org_data_fn, &org_size);
 			assert(org_data);
 		}
 		this->max_n = org_size / sizeof(T);
@@ -66,6 +67,12 @@ public:
 		this->src = this->aux = NULL;
 	}
 
+	void UpdateCounters(::benchmark::State &state) {
+		uint64_t keys = state.iterations() * n;
+		state.counters["KeyRate"] = benchmark::Counter(keys, benchmark::Counter::kIsRate);
+		state.SetBytesProcessed(keys * sizeof(value_type));
+	}
+
 	T *src;
 	T *aux;
 	size_t n;
@@ -81,8 +88,7 @@ BENCHMARK_DEFINE_F(FSu32, radix_sort)(benchmark::State &state) {
 	for (auto _ : state) {
 		auto *sorted = radix_sort(src, aux, n, true);
 	}
-	state.counters["KeyRate"] = benchmark::Counter(static_cast<int64_t>(state.iterations()) * n, benchmark::Counter::kIsRate);
-	state.SetBytesProcessed(static_cast<int64_t>(state.iterations()) * n * sizeof(FSu32::value_type));
+	UpdateCounters(state);
 }
 
 BENCHMARK_DEFINE_F(FSu32, StdSort)(benchmark::State &state) {
@@ -91,8 +97,7 @@ BENCHMARK_DEFINE_F(FSu32, StdSort)(benchmark::State &state) {
 	for (auto _ : state) {
 		std::sort(src, src + n);
 	}
-	state.counters["KeyRate"] = benchmark::Counter(static_cast<int64_t>(state.iterations()) * n, benchmark::Counter::kIsRate);
-	state.SetBytesProcessed(static_cast<int64_t>(state.iterations()) * n * sizeof(FSu32::value_type));
+	UpdateCounters(state);
 }
 
 static int qsort_u32(const void *p1, const void *p2) {
@@ -109,12 +114,11 @@ BENCHMARK_DEFINE_F(FSu32, QSort)(benchmark::State &state) {
 	for (auto _ : state) {
 		qsort(src, n, sizeof(*src), qsort_u32);
 	}
-	state.counters["KeyRate"] = benchmark::Counter(static_cast<int64_t>(state.iterations()) * n, benchmark::Counter::kIsRate);
-	state.SetBytesProcessed(static_cast<int64_t>(state.iterations()) * n * sizeof(FSu32::value_type));
+	UpdateCounters(state);
 }
 
-BENCHMARK_REGISTER_F(FSu32, radix_sort)->Arg(1)->RangeMultiplier(8)->Range(8, 8 << 20)->Arg(40000000);
-BENCHMARK_REGISTER_F(FSu32, StdSort)->Arg(1)->RangeMultiplier(8)->Range(8, 8 << 20)->Arg(40000000);
-BENCHMARK_REGISTER_F(FSu32, QSort)->Arg(1)->RangeMultiplier(8)->Range(8, 8 << 20)->Arg(40000000);
+BENCHMARK_REGISTER_F(FSu32, radix_sort)->RangeMultiplier(10)->Range(1, 40000000);
+BENCHMARK_REGISTER_F(FSu32, StdSort)->RangeMultiplier(10)->Range(1, 40000000);
+BENCHMARK_REGISTER_F(FSu32, QSort)->RangeMultiplier(10)->Range(1, 40000000);
 
 BENCHMARK_MAIN();
