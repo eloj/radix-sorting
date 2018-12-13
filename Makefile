@@ -42,7 +42,7 @@ CXXFLAGS=-std=gnu++14 $(OPT) $(MISCFLAGS) $(WARNFLAGS)
 
 .PHONY: genkeys clean
 
-all: radix counting_sort_8 counting_sort_8s counting_sort_rec_sk radix_sort_u32 radix_sort_u64_multipass genkeys
+all: radix counting_sort_8 counting_sort_8s counting_sort_rec_sk radix_sort_u32 radix_sort_u32_ranks radix_sort_u64_multipass genkeys
 
 opt: clean
 	@echo -e ${YELLOW}Building with profile generation...${NC}
@@ -72,6 +72,9 @@ counting_sort_rec_sk: counting_sort_rec_sk.c
 radix_sort_u32: radix_sort_u32.c
 	$(CC) $(CFLAGS) $< -o $@
 
+radix_sort_u32_ranks: radix_sort_u32_ranks.c
+	$(CC) $(CFLAGS) $< -o $@
+
 radix_sort_u64_multipass: radix_sort_u64_multipass.c
 	$(CC) $(CFLAGS) $< -o $@
 
@@ -87,4 +90,4 @@ genkeys: 40M_32bit_keys.dat
 	dd if=/dev/urandom bs=1024 count=156250 of=$@
 
 clean:
-	rm -f radix counting_sort_8 counting_sort_8s counting_sort_rec_sk radix_sort_u32 radix_sort_u64_multipass radix_bench core.* *.gcda
+	rm -f radix counting_sort_8 counting_sort_8s counting_sort_rec_sk radix_sort_u32 radix_sort_u32_ranks radix_sort_u64_multipass radix_bench core.* *.gcda

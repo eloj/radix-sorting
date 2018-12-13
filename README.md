@@ -26,6 +26,7 @@ All code is provided under the [MIT License](LICENSE).
 + [All together now; Radix sort](#radix-sort)
     + [Listing 4](#listing_rs32): 32-bit unrolled
     + [Listing 5](#listing_rs64): 64-bit and beyond
++ [Immutability](#by-rank)
 + [Key derivation](#key-derivation)
     + [Sort order](#ordering)
     + [Signed integer keys](#signed-keys)
@@ -367,7 +368,7 @@ void radix_sort_u32(struct sortrec *arr, struct sortrec *aux, size_t n)
 ```
 
 The function `radix_sort_u32()` builds on `counting_sort_rec_sk()` in a straight-forward manner
-by introducing four counting sort passes. It's _unrolled_ by design, to show off the pattern.
+by introducing four counting sort passes. The outer (pass) loop is _unrolled_ by design, to show off the pattern.
 
 The four histograms are generated in one pass through the input. These are re-processed into prefix sums
 in a separate pass. A speed vs memory trade-off can be had by not pre-computing all the histograms.
@@ -419,6 +420,65 @@ We can then sort 64-bit wide by calling the sort function twice as such:
 The first call will sort on bits 0-31 of the key, the second call on bits 32-63.
 
 This is only possible because the sort is stable.
+
+## <a name="by-rank"></a>Immutability
+
+So far, in the general case, we've had our code rearrange the values in the input array itself.
+It's sometimes desirable to be able to treat the input as immutable, however.
+
+The obvious, and common solution if we can't (or don't want to) rearrange the input, is to generate an array of pointers into
+the input and then sort those pointers. This is usually how we do things when sorting record types in a C-style language,
+since rearranging them implies copying a lot of data, which can be expensive, and because we can have multiple pointer arrays
+representing different sort orders over the same input.
+
+This is all well and fine, assuming we have access to pointers. Even if we do, there can be benefits
+to instead returning the indeces (or _ranks_) into the input array.
+
+Example: Take as input the array `A = { 2, 42, 1 }`. Assuming zero-based indexing, the rank-array representing
+an ascending sort of the input is `R = { 2, 0, 1 }`. I.e `{ A[R[0]], A[R[1]], A[R[2]], ... }` = `{ 1, 2, 42, ... }`
+
+So the goal is to modify our sorting function to return `R` instead of permuting `A`. We can achieve this with quite minor changes:
+
+<a name="listing_rs32ranks"></a>[Listing 6](radix_sort_u32_ranks.c):
+
+```c
+uint32_t *radix_sort_u32_index(const struct sortrec * const arr, uint32_t *indeces, size_t n)
+[...]
+	// Sort in four passes from LSB to MSB
+	for (i = 0 ; i < n ; ++i) {
+		uint8_t k0 = key_of(arr + i);
+		size_t dst = cnt0[k0]++;
+		indeces2[dst] = i;
+	}
+
+	for (i = 0 ; i < n ; ++i) {
+		uint8_t k1 = key_of(arr + indeces2[i]) >> 8;
+		size_t dst = cnt1[k1]++;
+		indeces[dst] = indeces2[i];
+	}
+[...]
+	return indeces;
+```
+
+First note in the prototype that we take the array of `const struct sortrec` by _const_. This
+means we can't write to `arr`, and hence we guarantee that the input is undisturbed.
+
+Instead of the old `aux` array we accept an array `indeces`, which has been allocated to be twice
+the number of entries to be sorted. It's twice the _length_ of the original array because we
+still need space to ping-pong reads and writes while sorting, and the input array is
+no longer available for writing.
+
+In the first pass we read the input in order and write out indeces in the correct positions in
+the indeces buffer. In subsequent passes we alternate reading via, and writing the indeces buffers.
+
+The extra indirection from looking up the key via the indeces array is likely to have negative
+implications for performance, but we'll revisit this issue at a later date.
+
+On the plus side, we have now decoupled the size of the auxiliary buffer(s) from the size of
+the objects in the input array. Yes, we need to allocate a buffer of twice the _length_ as
+when we're sorting by value, but we only need room for two indeces per entry, so the _size_
+of the auxilary buffer(s) is directly related to the number of objects being sorted. In other words,
+if we're sorting fewer than 64K objects, we can use 16-bit indeces, and so on.
 
 ## <a name="key-derivation"></a> Key derivation
 
