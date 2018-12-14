@@ -26,7 +26,7 @@ All code is provided under the [MIT License](LICENSE).
 + [All together now; Radix sort](#radix-sort)
     + [Listing 4](#listing_rs32): 32-bit unrolled
     + [Listing 5](#listing_rs64): 64-bit and beyond
-+ [Immutability](#by-rank)
++ [Immutability / Returning indeces](#by-rank)
 + [Key derivation](#key-derivation)
     + [Sort order](#ordering)
     + [Signed integer keys](#signed-keys)
@@ -421,21 +421,27 @@ The first call will sort on bits 0-31 of the key, the second call on bits 32-63.
 
 This is only possible because the sort is stable.
 
-## <a name="by-rank"></a>Immutability
+## <a name="by-rank"></a>Immutability / Returning indeces
 
-So far, in the general case, we've had our code rearrange the values in the input array itself.
-It's sometimes desirable to be able to treat the input as immutable, however.
+So far we've mostly had our code rearrange the values in the input array itself,
+but it's sometimes desirable to be able to treat the input as immutable.
 
-The obvious, and common solution if we can't (or don't want to) rearrange the input, is to generate an array of pointers into
-the input and then sort those pointers. This is usually how we do things when sorting record types in a C-style language,
-since rearranging them implies copying a lot of data, which can be expensive, and because we can have multiple pointer arrays
-representing different sort orders over the same input.
+The obvious solution is to generate an array of pointers into the input and then sort
+those pointers. This is usually how we do things when sorting record types (or strings)
+in a C-style language, since rearranging these implies copying a lot of data, which can be expensive,
+and because we can have multiple pointer arrays representing different sort orders over the same input.
 
-This is all well and fine, assuming we have access to pointers. Even if we do, there can be benefits
-to instead returning the indeces (or _ranks_) into the input array.
+An alternative is to sort using indeces instead. You can think of it as assigning
+a number between `0` and `N-1` to each object to be sorted, and the returning a permutation
+of these numbers that represents the sorted order.
 
 Example: Take as input the array `A = { 2, 42, 1 }`. Assuming zero-based indexing, the rank-array representing
-an ascending sort of the input is `R = { 2, 0, 1 }`. I.e `{ A[R[0]], A[R[1]], A[R[2]], ... }` = `{ 1, 2, 42, ... }`
+an ascending sort of the input is `R = { 2, 0, 1 }`. I.e `{ A[R[0]], A[R[1]], A[R[2]], ... A[R[N-1]]}` = `{ 1, 2, 42, ... }`
+
+Having the sort return indeces is also useful if we need to sort something which is split over
+different arrays, since the result can be applied to the original input as well as any 'parallel'
+arrays. This is demonstrated in the example code below, where we decouple `name` from
+the struct whose key we're sorting on.
 
 So the goal is to modify our sorting function to return `R` instead of permuting `A`. We can achieve this with quite minor changes:
 
@@ -460,7 +466,7 @@ uint32_t *radix_sort_u32_index(const struct sortrec * const arr, uint32_t *indec
 	return indeces;
 ```
 
-First note in the prototype that we take the array of `const struct sortrec` by _const_. This
+First note in the prototype that we declare the input array as _const_. This
 means we can't write to `arr`, and hence we guarantee that the input is undisturbed.
 
 Instead of the old `aux` array we accept an array `indeces`, which has been allocated to be twice
@@ -471,14 +477,15 @@ no longer available for writing.
 In the first pass we read the input in order and write out indeces in the correct positions in
 the indeces buffer. In subsequent passes we alternate reading via, and writing the indeces buffers.
 
-The extra indirection from looking up the key via the indeces array is likely to have negative
-implications for performance, but we'll revisit this issue at a later date.
+As with sorting via pointers, the extra indirection from looking up the key via the indeces array is
+likely to have negative implications for performance. We'll revisit this issue at a later date.
 
 On the plus side, we have now decoupled the size of the auxiliary buffer(s) from the size of
-the objects in the input array. Yes, we need to allocate a buffer of twice the _length_ as
+the objects in the input array. Yes, we need to allocate a buffer twice the _length_ of that
 when we're sorting by value, but we only need room for two indeces per entry, so the _size_
 of the auxilary buffer(s) is directly related to the number of objects being sorted. In other words,
-if we're sorting fewer than 64K objects, we can use 16-bit indeces, and so on.
+if we're sorting fewer than 2^16 objects, we can use 16-bit indeces to save space and improve
+cache behaviour.
 
 ## <a name="key-derivation"></a> Key derivation
 

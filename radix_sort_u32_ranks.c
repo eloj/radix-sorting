@@ -2,11 +2,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define SWAP(a, b) do { __auto_type T = (a); a = b; b = T; } while (0)
-
 struct sortrec {
 	uint32_t key;
-	const char *name;
+	// name has been decoupled into a separate array.
 };
 
 uint32_t key_of(const struct sortrec *rec) {
@@ -21,7 +19,7 @@ uint32_t *radix_sort_u32_index(const struct sortrec * const arr, uint32_t *indec
 	size_t cnt3[256] = { 0 };
 	size_t i;
 
-	// Split index array in the middle so we effectively have to separate buffers to ping-pong between.
+	// Split index array in the middle so we effectively have two separate buffers to ping-pong between.
 	uint32_t *indeces2 = indeces + n;
 
 	// Generate histograms
@@ -87,26 +85,39 @@ uint32_t *radix_sort_u32_index(const struct sortrec * const arr, uint32_t *indec
 	return indeces;
 }
 
-static void print_array_rec(const struct sortrec * const arr, uint32_t *indeces, size_t n) {
+static void print_array_rec(const struct sortrec * const arr, const char *names[], uint32_t *indeces, size_t n) {
 	for (size_t i = 0 ; i < n ; ++i) {
 		struct sortrec const *e = &arr[indeces[i]];
-		printf("%08zx: %08x (rank: %04x) -> %s\n", i, key_of(e), indeces[i], e->name);
+		printf("%08zx: %08x (rank: %04x) -> %s\n", i, key_of(e), indeces[i], names[indeces[i]]);
 	}
 }
 
 int main(int argc, char *argv[]) {
 
 	const struct sortrec arr[] = {
-		{ 4255, "1st 4255" },
-		{ 45, "1st 45" },
-		{ 45, "2nd 45" },
-		{ 45, "3rd 45" },
-		{ 0, "0" },
-		{ 0x800201, "0x800201" },
-		{ 255, "255" },
-		{ 256, "256" },
-		{ 0xFFFFFFFF, "definitely last" },
-		{ 4255, "2nd 4255" },
+		{ 4255 },
+		{ 45 },
+		{ 45 },
+		{ 45 },
+		{ 0 },
+		{ 0x800201 },
+		{ 255 },
+		{ 256 },
+		{ 0xFFFFFFFF },
+		{ 4255 },
+	};
+
+	const char *names[] = {
+		"1st 4255",
+		"1st 45",
+		"2nd 45",
+		"3rd 45",
+		"0",
+		"0x800201",
+		"255",
+		"256",
+		"definitely last",
+		"2nd 4255",
 	};
 
 	size_t N = sizeof(arr)/sizeof(arr[0]);
@@ -116,7 +127,7 @@ int main(int argc, char *argv[]) {
 
 	uint32_t *ranks = radix_sort_u32_index(arr, indeces, N);
 
-	print_array_rec(arr, ranks, N);
+	print_array_rec(arr, names, ranks, N);
 
 	free(indeces);
 
