@@ -55,8 +55,8 @@ caveat that it's _in-place_, and see [CPU Bugs](#cpu-bugs) for an update).
 
 ## <a name="counting-sort"></a> From the top; Counting sort
 
-The simplest way to sort an array of integers, without comparing elements, is to simply count
-how many there are of each unique integer, and use those counts to write the result.
+Possibly the simplest way to sort an array of integers, is to simply count how many there are
+of each, and use those counts to write the result. We don't even have to compare elements.
 
 This is the most basic [counting sort](https://en.wikipedia.org/wiki/Counting_sort).
 
@@ -87,7 +87,7 @@ of this counting sort become fairly obvious; you need a location to store the co
 integer. For 8- and 16-bit numbers this would amount to `2^8*4`=1KiB and `2^16*4`=256KiB of memory. For
 32-bit integers, it'd require `2^32*4`=16GiB of memory. Multiply by two if you need 64- instead of 32-bit counters.
 
-As the wikipedia page explains, it's really the size of the keys involved that matters. Some
+As the wikipedia page explains, it's really the magnitude of the keys involved that matters. Some
 implementations can be seen scanning the input data to determine and allocate just enough entries to fit
 either `max(key) + 1`, or tighter, `max(key) - min(key) + 1` keys. However, unless you do this because you
 allocate memory on each sort call and just want to save some, you will most likely have to consider what to do
@@ -253,8 +253,8 @@ Because we're using a computer and operate on bits, instead of division and modu
 operations, we use _bit-shifts_ and _bit-masking_.
 
 Below is a table of random 32-bit keys written out in [hexadecimal](https://en.wikipedia.org/wiki/Hexadecimal), or base-16,
-which is a convenient notation for the task at hand. In hexadecimal
-a group of four bits is represented with a symbol (digit) from 0-F (0-9 plus A-F), and
+which is a convenient notation for us.
+In hexadecimal a group of four bits is represented with a symbol (digit) from 0-F (0-9 plus A-F), and
 consequently a group of eight bits is represented by two such symbols.
 
  | 32-bit key | A  | B  | C  | D  |
@@ -281,7 +281,7 @@ we're going down the LSB path, meaning we'll process the columns from right to l
 In our counting sorts, the key width and the radix (or column) width were the same; 8-bits.
 In a radix sort the column width will be less or equal to the key width, and in a LSB radix sort
 we'll be forced to make multiple passes over the input to make up the difference. The wider
-our radix the more memory (to track counts), but fewer passes we'll need. This is the tradeoff.
+our radix the more memory (to track counts), but fewer passes we'll need. This is a tradeoff.
 
 The assertion then, and we will demonstrate this to be true, is that if we apply counting sort
 by column *D*, and then apply counting sort on that result by column *C*, and so forth, after the last
@@ -371,7 +371,7 @@ The function `radix_sort_u32()` builds on `counting_sort_rec_sk()` in a straight
 by introducing four counting sort passes. The outer (pass) loop is _unrolled_ by design, to show off the pattern.
 
 The four histograms are generated in one pass through the input. These are re-processed into prefix sums
-in a separate pass. A speed vs memory trade-off can be had by not pre-computing all the histograms.
+in a separate step. A speed vs memory trade-off can be had by not pre-computing all the histograms.
 
 We then sort columns *D* through *A*, swapping (a.k.a ping-ponging) the
 input and output buffer between the passes.
