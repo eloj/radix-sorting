@@ -16,7 +16,7 @@ void counting_sort_rec_sk(struct sortrec *arr, struct sortrec *aux, size_t n)
 	size_t cnt[256] = { 0 };
 	size_t i;
 
-	// Count number of occurences of each key.
+	// Count number of occurrences of each key.
 	for (i = 0 ; i < n ; ++i) {
 		uint8_t k = key_of(arr + i);
 		cnt[k]++;

@@ -71,7 +71,7 @@ void counting_sort_8(uint8_t *arr, size_t n)
 	size_t cnt[256] = { 0 };
 	size_t i;
 
-	// Count number of occurences of each octet.
+	// Count number of occurrences of each octet.
 	for (i = 0 ; i < n ; ++i) {
 		cnt[arr[i]]++;
 	}
@@ -118,7 +118,7 @@ void counting_sort_8s(uint8_t *arr, uint8_t *aux, size_t n)
 	size_t cnt[256] = { 0 };
 	size_t i;
 
-	// Count number of occurences of each octet.
+	// Count number of occurrences of each octet.
 	for (i = 0 ; i < n ; ++i) {
 		cnt[arr[i]]++;
 	}
@@ -176,7 +176,7 @@ void counting_sort_rec_sk(struct sortrec *arr, struct sortrec *aux, size_t n)
 	size_t cnt[256] = { 0 };
 	size_t i;
 
-	// Count number of occurences of each key.
+	// Count number of occurrences of each key.
 	for (i = 0 ; i < n ; ++i) {
 		uint8_t k = key_of(arr + i);
 		cnt[k]++;
@@ -777,7 +777,7 @@ Consider what it would mean if in a counting sort, instead of a typical 32- or 6
 Instead of an array of counters, we have a bitmap. Instead of increasing a counter each time we see a value,
 we simply mark it off as present in the bitmap.
 
-This would only work if there were zero or one occurences of each possible input value. More correctly; it would
+This would only work if there were zero or one occurrence of each possible input value. More correctly; it would
 only work if we're okay with removing any duplicates in the input, leaving only unique values.
 
 <a name="listing_bm16"></a>[Listing 7](bitmap_sort_16.c):
