@@ -43,6 +43,9 @@ All code is provided under the [MIT License](LICENSE).
     + [CPU Bugs](#cpu-bugs)
 + [C++ Implementation](#cpp-implementation)
     + [Benchmarks](#cpp-benchmark)
++ [Esoterics](#esoterics)
+    + [Uniquely sorting with bitmaps](#bm-unique)
+    + [Listing 7](#listing_bm16): Bitmap sort
 + [Contributors](#contributors)
 + [Resources](#resources)
 
@@ -764,6 +767,33 @@ especially when there is little other pressure on the memory allocator.
 
 Because we're sorting random data, the column-skipping optimization is very unlikely to kick in, so while
 the benchmark is realistic, it is by no means a best-case scenario.
+
+## <a name="esoterics"></a> Esoterics
+
+### <a name="bm-unique"></a> Uniquely sorting with bitmaps
+
+Consider what it would mean if in a counting sort, instead of a typical 32- or 64-bit counter, we only had one bit per integer.
+
+Instead of an array of counters, we have a bitmap. Instead of increasing a counter each time we see a value,
+we simply mark it off as present in the bitmap.
+
+This would only work if there were zero or one occurences of each possible input value. More correctly; it would
+only work if we're okay with removing any duplicates in the input, leaving only unique values.
+
+<a name="listing_bm16"></a>[Listing 7](bitmap_sort_16.c):
+
+```c
+void bitmap_sort_16(uint16_t *arr, uint64_t *bitmap, size_t n)
+{
+	// Mark integers as present in bitmap
+	for (size_t i = 0 ; i < n ; ++i) {
+		bitmap[arr[i] >> 6] |= (1L << (arr[i] & 63));
+	}
+}
+```
+
+Since we're using a single bit per value we have extend the magnitude of keys we can handle
+per unit memory by a factor of 32 or 64. We can now go up to 24-bit keys in only 2MiB memory.
 
 ## MSB - The other path
 
