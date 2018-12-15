@@ -95,8 +95,14 @@ if the input range is too wide to handle, which is not a good position to be in.
 want to fail on some inputs, which makes that type of implementation not very useful, unless you know that the
 range of input values will be limited.
 
-As presented, this sort is _in-place_, but since -- in addition to not comparing elements -- it's not moving
-any elements either, it doesn't really make sense to think of it as being _stable_ or  _unstable_.
+As presented, this sort is _in-place_, but since it's not moving any elements, it doesn't really make sense
+to think of it as being _stable_ or  _unstable_.
+
+An [in-place sort](https://en.wikipedia.org/wiki/In-place_algorithm) is a sorting algorithm where the amount of
+extra memory used does not depend on the size of the input.
+
+A [stable sort](https://en.wikipedia.org/wiki/Sorting_algorithm#Stability) is one where records with like keys keep
+their relative position in the sorted output.
 
 To get us closer to radix sorting, we now need to consider a slightly more general variant where we're, at
 least conceptually, rearranging input elements:
@@ -199,7 +205,7 @@ The primary modification to the sorting function is the small addition of a func
 the key for a given record.
 
 The main insight you should take away from this is that if the things we're sorting aren't themselves the
-keys but (pointers to) some composed type, we just need some way to _extract_ or _derive_ a key for each entry instead.
+keys but some composed type, we just need some way to _extract_ or _derive_ a key for each entry instead.
 
 We're still restricted to integer keys. We rely on there being some sort of mapping from our records (or _entries_)
 to the integers which orders the records the way we require.
@@ -227,9 +233,10 @@ Now we are ready to take the step from counting sorts to radix sorts.
 
 ## <a name="radix-sort"></a> All together now; Radix sort
 
-A [radix sort](https://www.nist.gov/dads/HTML/radixsort.html) works by looking at some portion of a key, sorting all entries based on
-that portion, then taking another pass and look at the next portion, and so on until
-the whole of the keys, or as much as is necessary, have been processed.
+On a high level, the [radix sort](https://www.nist.gov/dads/HTML/radixsort.html) we'll
+cover next uses the counting sort we have already discussed, but overcome the inherent
+limitation of counting sorts to deal with large magnitude (or _wide_) keys by using
+multiple passes, each pass processing only a part of the key.
 
 Some texts describe this as looking at the individual digits of an integer key, which
 you can process digit-by-digit via a series of modulo (remainder) and division operations
@@ -286,6 +293,8 @@ our radix the more memory (to track counts), but fewer passes we'll need. This i
 The assertion then, and we will demonstrate this to be true, is that if we apply counting sort
 by column *D*, and then apply counting sort on that result by column *C*, and so forth, after the last
 column (*A*) is processed, our data will be sorted and this sort is stable.
+
+This is radix sort.
 
 <a name="listing_rs32"></a>[Listing 4](radix_sort_u32.c):
 
@@ -432,7 +441,7 @@ in a C-style language, since rearranging these implies copying a lot of data, wh
 and because we can have multiple pointer arrays representing different sort orders over the same input.
 
 An alternative is to sort using indeces instead. You can think of it as assigning
-a number between `0` and `N-1` to each object to be sorted, and the returning a permutation
+a number between `0` and `N-1` to each object to be sorted, and then returning a permutation
 of these numbers that represents the sorted order.
 
 Example: Take as input the array `A = { 2, 42, 1 }`. Assuming zero-based indexing, the rank-array representing
@@ -483,7 +492,7 @@ likely to have negative implications for performance. We'll revisit this issue a
 On the plus side, we have now decoupled the size of the auxiliary buffer(s) from the size of
 the objects in the input array. Yes, we need to allocate a buffer twice the _length_ of that
 when we're sorting by value, but we only need room for two indeces per entry, so the _size_
-of the auxilary buffer(s) is directly related to the number of objects being sorted. In other words,
+of the auxilary buffer(s) is directly related to the number of objects being sorted. So for example,
 if we're sorting fewer than 2^16 objects, we can use 16-bit indeces to save space and improve
 cache behaviour.
 
