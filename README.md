@@ -27,6 +27,7 @@ All code is provided under the [MIT License](LICENSE).
     + [Listing 4](#listing_rs32): 32-bit unrolled
     + [Listing 5](#listing_rs64): 64-bit and beyond
 + [Immutability / Returning indeces](#by-rank)
+    + [Listing 6](#listing_rs32ranks): Rank sort
 + [Key derivation](#key-derivation)
     + [Sort order](#ordering)
     + [Signed integer keys](#signed-keys)
