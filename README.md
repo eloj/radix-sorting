@@ -37,10 +37,10 @@ All code is provided under the [MIT License](LICENSE).
     + [Pre-sorted detection](#sort-detection)
     + [Column skipping](#column-skipping)
     + [Histogram memory](#histogram-memory)
+    + [Wider or narrower radix](#radix-width)
     + [Key rewriting](#key-rewriting)
     + [Prefetching](#prefetching)
     + [Vectorized histogramming](#vectorization)
-    + [Wider or narrower radix](#radix-width)
     + [CPU Bugs](#cpu-bugs)
 + [C++ Implementation](#cpp-implementation)
     + [Benchmarks](#cpp-benchmark)
@@ -672,6 +672,31 @@ footprint to two histogram buffers in the unrolled form.
 That said, it's hard to imagine a scenario where this would be a win on a typical
 "big CPU" system where memory and cache is plentiful and prefetching efficient.
 
+### <a name="radix-width"></a> Wider or narrower radix
+
+Using multiples of eight bits for the radix is convenient, but not required. If we do,
+we limit ourselves to 8-bit or 16-bit wide radixes in practice. Using an intermediate size
+such as 11-bits with three passes saves us one pass for every 32-bits of key, but also makes
+it less likely for the column skipping to kick in, and adds a few extra masking operations.
+
+Going narrower could allow us to skip more columns in common workloads. There's definitely
+room for experimentation in this area, maybe even trying non-uniformly wide radixes (8-16-8) or
+dynamic selection of radix widths.
+
+That said, in my limited initial testing, neither 4- nor 11-bit wide radix showed any promise
+at all in sorting 32-bit integers. Quite the contrary, both were bad across the board.
+
+The 4-bit version never had much going for it, so no big surprise there. Perhaps if you have
+to sort on a tiny microprocessor it may be worth going down in radix, but on a modern "big CPU"
+I'm confident saying it is not.
+
+The 11-bit version on the other hand was surprisingly bad, and was never even close to beating
+the standard 8-bit radix implementation, even when reducing the counter width down to 32-bits
+to compensate for the larger number of buckets.
+
+There is perhaps a world with bigger caches and faster memory where going wider is better,
+but for now it seems eight bits reigns supreme.
+
 ### <a name="key-rewriting"></a> Key rewriting
 
 Instead of applying the key-derivation function on each access, you could
@@ -709,17 +734,6 @@ to a vectorized implementation that is worth it in practice. The issue seems to 
 gather/scatter support. I'm looking forward to be proven wrong about this in the future.
 
 For other architectures this may be more viable.
-
-### <a name="radix-width"></a> Wider or narrower radix
-
-Using multiples of eight bits for the radix is convenient, but not required. If we do,
-we limit ourselves to 8-bit or 16-bit wide radixes in practice. Using an intermediate size such as 11-bits
-with three passes saves us one pass for every 32-bits of key, but also makes it less likely
-for the column skipping to kick in, and adds a few extra masking operations.
-
-Going narrower could allow us to skip more columns in common workloads. There's definitely
-room for experimentation in this area, maybe even trying non-uniformly wide radixes (8-16-8) or
-dynamic selection of radix widths.
 
 ### <a name="cpu-bugs"></a> CPU Bugs
 
