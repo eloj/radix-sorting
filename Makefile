@@ -1,4 +1,3 @@
-
 OPT=-O3 -fomit-frame-pointer -funroll-loops -fstrict-aliasing -march=native -mtune=native -msse4.2 -mavx
 LTOFLAGS=-flto -fno-fat-lto-objects -fuse-linker-plugin
 WARNFLAGS=-Wall -Wextra
@@ -40,9 +39,25 @@ endif
 CFLAGS=-std=c11 $(OPT) $(WARNFLAGS) $(MISCFLAGS)
 CXXFLAGS=-std=gnu++14 $(OPT) $(WARNFLAGS) $(MISCFLAGS)
 
+examples=counting_sort_8 counting_sort_8s counting_sort_rec_sk \
+		 radix_sort_u32 radix_sort_u32_ranks radix_sort_u64_multipass \
+		 bitmap_sort_16
+
 .PHONY: genkeys clean
 
-all: radix counting_sort_8 counting_sort_8s counting_sort_rec_sk bitmap_sort_16 radix_sort_u32 radix_sort_u32_ranks radix_sort_u64_multipass genkeys
+all: $(examples) radix radix_bench
+
+test: radix genkeys
+	${TEST_PREFIX} ./radix $N
+
+bench: radix_bench genkeys
+	./radix_bench --benchmark_counters_tabular=true
+
+radix: radix_experiment.cpp radix_sort.hpp
+	$(CXX) $(CXXFLAGS) -DVERIFY_SORT radix_experiment.cpp -o $@
+
+radix_bench: radix_bench.cpp radix_sort.hpp
+	$(CXX) $(CXXFLAGS) $< -lbenchmark -pthread -o $@
 
 opt: clean
 	@echo -e ${YELLOW}Building with profile generation...${NC}
@@ -54,43 +69,10 @@ opt: clean
 	@echo -e ${YELLOW}Recompiling using profile data...${NC}
 	@LTO=1 PROFILEUSE=on make radix
 
-test: radix
-	${TEST_PREFIX} ./radix $N
-
-bench: radix_bench genkeys
-	./radix_bench --benchmark_counters_tabular=true
-
-counting_sort_8: counting_sort_8.c
-	$(CC) $(CFLAGS) $< -o $@
-
-counting_sort_8s: counting_sort_8s.c
-	$(CC) $(CFLAGS) $< -o $@
-
-counting_sort_rec_sk: counting_sort_rec_sk.c
-	$(CC) $(CFLAGS) $< -o $@
-
-bitmap_sort_16: bitmap_sort_16.c
-	$(CC) $(CFLAGS) $< -o $@
-
-radix_sort_u32: radix_sort_u32.c
-	$(CC) $(CFLAGS) $< -o $@
-
-radix_sort_u32_ranks: radix_sort_u32_ranks.c
-	$(CC) $(CFLAGS) $< -o $@
-
-radix_sort_u64_multipass: radix_sort_u64_multipass.c
-	$(CC) $(CFLAGS) $< -o $@
-
-radix: radix_experiment.cpp radix_sort.hpp
-	$(CXX) $(CXXFLAGS) -DVERIFY_SORT radix_experiment.cpp -o $@
-
-radix_bench: radix_bench.cpp radix_sort.hpp
-	$(CXX) $(CXXFLAGS) $< -lbenchmark -pthread -o $@
-
 genkeys: 40M_32bit_keys.dat
 
 40M_32bit_keys.dat:
 	dd if=/dev/urandom bs=1024 count=156250 of=$@
 
 clean:
-	rm -f radix counting_sort_8 counting_sort_8s counting_sort_rec_sk bitmap_sort_16 radix_sort_u32 radix_sort_u32_ranks radix_sort_u64_multipass radix_bench core.* *.gcda
+	rm -f radix radix_bench $(examples) core.* *.gcda
