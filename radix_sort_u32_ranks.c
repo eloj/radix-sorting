@@ -2,9 +2,33 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-struct sortrec {
+static const struct sortrec {
 	uint32_t key;
 	// name has been decoupled into a separate array.
+} arr[] = {
+	{ 4255 },
+	{ 45 },
+	{ 45 },
+	{ 45 },
+	{ 0 },
+	{ 0x800201 },
+	{ 255 },
+	{ 256 },
+	{ 0xFFFFFFFF },
+	{ 4255 },
+};
+
+static const char *names[] = {
+	"1st 4255",
+	"1st 45",
+	"2nd 45",
+	"3rd 45",
+	"0",
+	"0x800201",
+	"255",
+	"256",
+	"definitely last",
+	"2nd 4255",
 };
 
 uint32_t key_of(const struct sortrec *rec) {
@@ -93,32 +117,6 @@ static void print_array_rec(const struct sortrec * const arr, const char *names[
 }
 
 int main(int argc, char *argv[]) {
-
-	const struct sortrec arr[] = {
-		{ 4255 },
-		{ 45 },
-		{ 45 },
-		{ 45 },
-		{ 0 },
-		{ 0x800201 },
-		{ 255 },
-		{ 256 },
-		{ 0xFFFFFFFF },
-		{ 4255 },
-	};
-
-	const char *names[] = {
-		"1st 4255",
-		"1st 45",
-		"2nd 45",
-		"3rd 45",
-		"0",
-		"0x800201",
-		"255",
-		"256",
-		"definitely last",
-		"2nd 4255",
-	};
 
 	size_t N = sizeof(arr)/sizeof(arr[0]);
 
