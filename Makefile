@@ -37,7 +37,7 @@ ifndef OPTIMIZED
 endif
 
 CFLAGS=-std=c11 $(OPT) $(WARNFLAGS) $(MISCFLAGS)
-CXXFLAGS=-std=gnu++14 $(OPT) $(WARNFLAGS) $(MISCFLAGS)
+CXXFLAGS=-std=gnu++17 $(OPT) $(WARNFLAGS) $(MISCFLAGS)
 
 examples=counting_sort_8 counting_sort_8s counting_sort_rec_sk \
 		 radix_sort_u32 radix_sort_u32_ranks radix_sort_u64_multipass \

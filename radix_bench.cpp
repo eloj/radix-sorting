@@ -10,10 +10,6 @@
 #include <benchmark/benchmark.h>
 #include "radix_sort.hpp"
 
-static const char *org_data_fn = "40M_32bit_keys.dat";
-static void *org_data;
-static size_t org_size;
-
 static void* read_file(const char *filename, size_t *limit) {
 	void *keys = NULL;
 	size_t bytes = 0;
@@ -46,10 +42,13 @@ template <typename T>
 class FileSort : public ::benchmark::Fixture {
 public:
 	typedef T value_type;
+	static inline void *org_data;
+	static inline size_t org_size;
 
 	void SetUp(const ::benchmark::State& state) {
 		if (!org_data) {
-			org_data = (T*)read_file(org_data_fn, &org_size);
+			org_size = 0;
+			org_data = (T*)read_file("40M_32bit_keys.dat", &org_size);
 			assert(org_data);
 		}
 		this->max_n = org_size / sizeof(T);
