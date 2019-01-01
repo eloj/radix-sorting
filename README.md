@@ -10,7 +10,7 @@ These are my notes on engineering a [radix sort](https://en.wikipedia.org/wiki/R
 
 The ideas behind radix sorting are not new in any way, but seems to have become,
 if not forgotten, so at least under-utilized, as over the years _quicksort_ became
-the go-to "default" sorting algorithm.
+the [go-to](https://cs.stackexchange.com/questions/3/why-is-quicksort-better-than-other-sorting-algorithms-in-practice) "default" sorting algorithm.
 
 Unless otherwise specified, this code is written foremost to be clear and easy to understand.
 
