@@ -47,6 +47,7 @@ All code is provided under the [MIT License](LICENSE).
 + [Esoterics](#esoterics)
     + [Uniquely sorting with bitmaps](#bm-unique)
     + [Listing 7](#listing_bm16): Bitmap sort
++ [Todo](#todo)
 + [Contributors](#contributors)
 + [Resources](#resources)
 
@@ -810,14 +811,14 @@ void bitmap_sort_16(uint16_t *arr, uint64_t *bitmap, size_t n)
 Since we're using a single bit per value we have extend the magnitude of keys we can handle
 per unit memory by a factor of 32 or 64. We can now go up to 24-bit keys in only 2MiB memory.
 
-## MSB - The other path
+## <a name="todo"></a> TODO
 
-_TODO_
-
++ Point out places where endianess could matter (i.e float conversion)
++ MSB - The other path
 + Buc--ket sort
 + Ame--rican Flag Sort
 
-## Miscellaneous
+## <a name="misc"></a> Miscellaneous
 
 * Asserting on histogram counter overflow.
 
