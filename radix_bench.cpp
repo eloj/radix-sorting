@@ -100,8 +100,8 @@ BENCHMARK_DEFINE_F(FSu32, StdSort)(benchmark::State &state) {
 }
 
 static int qsort_u32(const void *p1, const void *p2) {
-	uint32_t a = *(uint32_t*)p1;
-	uint32_t b = *(uint32_t*)p2;
+	uint32_t a = *(const uint32_t*)p1;
+	uint32_t b = *(const uint32_t*)p2;
 	if (a < b)
 		return -1;
 	return (a > b) ? 1 : 0;
