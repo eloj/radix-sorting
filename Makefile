@@ -1,6 +1,7 @@
 OPT=-O3 -fomit-frame-pointer -funroll-loops -fstrict-aliasing -march=native -mtune=native -msse4.2 -mavx
 LTOFLAGS=-flto -fno-fat-lto-objects -fuse-linker-plugin
-WARNFLAGS=-Wall -Wextra
+WARNFLAGS=-Wall -Wextra -Wshadow -Wstrict-aliasing=2 -Wcast-qual -Wcast-align -Wpointer-arith -Wredundant-decls -Wfloat-equal -Wswitch-enum
+CWARNFLAGS=-Wstrict-prototypes -Wmissing-prototypes
 MISCFLAGS=-fstack-protector -fvisibility=hidden
 DEVFLAGS = -Wno-unused-parameter -Wno-unused-variable
 
@@ -36,7 +37,7 @@ ifndef OPTIMIZED
 	MISCFLAGS+=-g -DDEBUG $(DEVFLAGS)
 endif
 
-CFLAGS=-std=c11 $(OPT) $(WARNFLAGS) $(MISCFLAGS)
+CFLAGS=-std=c11 $(OPT) $(CWARNFLAGS) $(WARNFLAGS) $(MISCFLAGS)
 CXXFLAGS=-std=gnu++17 $(OPT) $(WARNFLAGS) $(MISCFLAGS)
 
 examples=counting_sort_8 counting_sort_8s counting_sort_rec_sk \
