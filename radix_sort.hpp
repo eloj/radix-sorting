@@ -133,14 +133,14 @@ float* radix_sort(float * RESTRICT src, float * RESTRICT aux, size_t n, bool asc
 		return src;
 	if (asc) {
 		return radix_sort_internal<float>(src, aux, n, [](const float &entry) KEYFN_ATTR {
-			uint32_t local = *reinterpret_cast<const uint32_t*>(&entry);
-			// memcpy(&local, &entry, sizeof(local));
+			uint32_t local; // = *reinterpret_cast<const uint32_t*>(&entry);
+			memcpy(&local, &entry, sizeof(local));
 			return (local ^ (-(local >> 31) | (1L << 31)));
 		});
 	} else {
 		return radix_sort_internal<float>(src, aux, n, [](const float &entry) KEYFN_ATTR {
-			uint32_t local = *reinterpret_cast<const uint32_t*>(&entry);
-			// memcpy(&local, &entry, sizeof(local));
+			uint32_t local; // = *reinterpret_cast<const uint32_t*>(&entry);
+			memcpy(&local, &entry, sizeof(local));
 			return ~(local ^ (-(local >> 31) | (1L << 31)));
 		});
 	}

@@ -1,6 +1,6 @@
 OPT=-O3 -fomit-frame-pointer -funroll-loops -fstrict-aliasing -march=native -mtune=native -msse4.2 -mavx
 LTOFLAGS=-flto -fno-fat-lto-objects -fuse-linker-plugin
-WARNFLAGS=-Wall -Wextra -Wshadow -Wstrict-aliasing=2 -Wcast-qual -Wcast-align -Wpointer-arith -Wredundant-decls -Wfloat-equal -Wswitch-enum
+WARNFLAGS=-Wall -Wextra -Wshadow -Wstrict-aliasing -Wcast-qual -Wcast-align -Wpointer-arith -Wredundant-decls -Wfloat-equal -Wswitch-enum
 CWARNFLAGS=-Wstrict-prototypes -Wmissing-prototypes
 MISCFLAGS=-fstack-protector -fvisibility=hidden
 DEVFLAGS = -Wno-unused-parameter -Wno-unused-variable
