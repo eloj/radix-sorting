@@ -7,11 +7,11 @@ struct sortrec {
 	const char *name;
 };
 
-uint8_t key_of(const struct sortrec *rec) {
+static uint8_t key_of(const struct sortrec *rec) {
 	return rec->key;
 }
 
-void counting_sort_rec_sk(struct sortrec *arr, struct sortrec *aux, size_t n)
+static void counting_sort_rec_sk(struct sortrec *arr, struct sortrec *aux, size_t n)
 {
 	size_t cnt[256] = { 0 };
 	size_t i;

@@ -9,11 +9,11 @@ struct sortrec {
 	const char *name;
 };
 
-uint32_t key_of(const struct sortrec *rec) {
+static uint32_t key_of(const struct sortrec *rec) {
 	return rec->key;
 }
 
-void radix_sort_u32(struct sortrec *arr, struct sortrec *aux, size_t n)
+static void radix_sort_u32(struct sortrec *arr, struct sortrec *aux, size_t n)
 {
 	size_t cnt0[256] = { 0 };
 	size_t cnt1[256] = { 0 };

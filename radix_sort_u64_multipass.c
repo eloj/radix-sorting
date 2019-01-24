@@ -10,7 +10,7 @@ struct sortrec {
 	const char *name;
 };
 
-uint64_t key_of(const struct sortrec *rec) {
+static uint64_t key_of(const struct sortrec *rec) {
 	return rec->key;
 }
 

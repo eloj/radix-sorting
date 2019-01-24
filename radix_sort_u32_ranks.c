@@ -5,7 +5,7 @@
 static const struct sortrec {
 	uint32_t key;
 	// name has been decoupled into a separate array.
-} arr[] = {
+} src_arr[] = {
 	{ 4255 },
 	{ 45 },
 	{ 45 },
@@ -18,7 +18,7 @@ static const struct sortrec {
 	{ 4255 },
 };
 
-static const char *names[] = {
+static const char *src_names[] = {
 	"1st 4255",
 	"1st 45",
 	"2nd 45",
@@ -31,11 +31,11 @@ static const char *names[] = {
 	"2nd 4255",
 };
 
-uint32_t key_of(const struct sortrec *rec) {
+static uint32_t key_of(const struct sortrec *rec) {
 	return rec->key;
 }
 
-uint32_t *radix_sort_u32_index(const struct sortrec * const arr, uint32_t *indeces, size_t n)
+static uint32_t *radix_sort_u32_index(const struct sortrec * const arr, uint32_t *indeces, size_t n)
 {
 	size_t cnt0[256] = { 0 };
 	size_t cnt1[256] = { 0 };
@@ -118,14 +118,14 @@ static void print_array_rec(const struct sortrec * const arr, const char *names[
 
 int main(int argc, char *argv[]) {
 
-	size_t N = sizeof(arr)/sizeof(arr[0]);
+	size_t N = sizeof(src_arr)/sizeof(src_arr[0]);
 
 	// Allocate space for two indeces per entry to be sorted.
 	uint32_t *indeces = malloc(sizeof(uint32_t) * N * 2);
 
-	uint32_t *ranks = radix_sort_u32_index(arr, indeces, N);
+	uint32_t *ranks = radix_sort_u32_index(src_arr, indeces, N);
 
-	print_array_rec(arr, names, ranks, N);
+	print_array_rec(src_arr, src_names, ranks, N);
 
 	free(indeces);
 

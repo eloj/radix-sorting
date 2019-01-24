@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-void bitmap_sort_16(uint16_t *arr, uint64_t *bitmap, size_t n)
+static void bitmap_sort_16(uint16_t *arr, uint64_t *bitmap, size_t n)
 {
 	// Mark integers as present in bitmap
 	for (size_t i = 0 ; i < n ; ++i) {

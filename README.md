@@ -68,7 +68,7 @@ This is the most basic [counting sort](https://en.wikipedia.org/wiki/Counting_so
 <a name="listing_cs8"></a>[Listing 1](counting_sort_8.c):
 
 ```c
-void counting_sort_8(uint8_t *arr, size_t n)
+static void counting_sort_8(uint8_t *arr, size_t n)
 {
 	size_t cnt[256] = { 0 };
 	size_t i;
@@ -115,7 +115,7 @@ least conceptually, rearranging input elements:
 <a name="listing_cs8s"></a>[Listing 2](counting_sort_8s.c):
 
 ```c
-void counting_sort_8s(uint8_t *arr, uint8_t *aux, size_t n)
+static void counting_sort_8s(uint8_t *arr, uint8_t *aux, size_t n)
 {
 	size_t cnt[256] = { 0 };
 	size_t i;
@@ -173,7 +173,7 @@ With a few basic modifications, we arrive at:
 <a name="listing_csrec"></a>[Listing 3](counting_sort_rec_sk.c):
 
 ```c
-void counting_sort_rec_sk(struct sortrec *arr, struct sortrec *aux, size_t n)
+static void counting_sort_rec_sk(struct sortrec *arr, struct sortrec *aux, size_t n)
 {
 	size_t cnt[256] = { 0 };
 	size_t i;
@@ -304,7 +304,7 @@ This is radix sort.
 <a name="listing_rs32"></a>[Listing 4](radix_sort_u32.c):
 
 ```c
-void radix_sort_u32(struct sortrec *arr, struct sortrec *aux, size_t n)
+static void radix_sort_u32(struct sortrec *arr, struct sortrec *aux, size_t n)
 {
 	size_t cnt0[256] = { 0 };
 	size_t cnt1[256] = { 0 };
@@ -405,7 +405,7 @@ struct sortrec {
 	const char *name;
 };
 
-uint64_t key_of(const struct sortrec *rec) {
+static uint64_t key_of(const struct sortrec *rec) {
 	return rec->key;
 }
 
@@ -462,7 +462,7 @@ So the goal is to modify our sorting function to return `R` instead of permuting
 <a name="listing_rs32ranks"></a>[Listing 6](radix_sort_u32_ranks.c):
 
 ```c
-uint32_t *radix_sort_u32_index(const struct sortrec * const arr, uint32_t *indeces, size_t n)
+static uint32_t *radix_sort_u32_index(const struct sortrec * const arr, uint32_t *indeces, size_t n)
 [...]
 	// Sort in four passes from LSB to MSB
 	for (i = 0 ; i < n ; ++i) {
@@ -799,7 +799,7 @@ only work if we're okay with removing any duplicates in the input, leaving only 
 <a name="listing_bm16"></a>[Listing 7](bitmap_sort_16.c):
 
 ```c
-void bitmap_sort_16(uint16_t *arr, uint64_t *bitmap, size_t n)
+static void bitmap_sort_16(uint16_t *arr, uint64_t *bitmap, size_t n)
 {
 	// Mark integers as present in bitmap
 	for (size_t i = 0 ; i < n ; ++i) {

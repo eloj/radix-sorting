@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-void counting_sort_8s(uint8_t *arr, uint8_t *aux, size_t n)
+static void counting_sort_8s(uint8_t *arr, uint8_t *aux, size_t n)
 {
 	size_t cnt[256] = { 0 };
 	size_t i;
