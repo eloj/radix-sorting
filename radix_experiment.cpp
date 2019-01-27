@@ -76,6 +76,34 @@ void* my_allocate(size_t size, int use_mmap, int use_huge, const char *usage) {
 	return mem;
 }
 
+static void* read_file(const char *filename, size_t *limit, int use_mmap, int use_huge) {
+	void *keys = NULL;
+	size_t bytes = 0;
+
+	FILE *f = fopen(filename, "rb");
+	if (f) {
+		fseek(f, 0, SEEK_END);
+		bytes = ftell(f);
+		fseek(f, 0, SEEK_SET);
+
+		if (*limit > 0 && *limit < bytes)
+			bytes = *limit;
+
+		keys = my_allocate(bytes, use_mmap, use_huge, "input.");
+		assert(keys);
+
+		long rnum = fread(keys, bytes, 1, f);
+		fclose(f);
+		if (rnum != 1) {
+			free(keys);
+			return NULL;
+		}
+	}
+
+	*limit = bytes;
+	return keys;
+}
+
 template <typename T>
 void print_sort(T *keys, size_t offset, size_t n) {
 	for (size_t i = offset ; i < offset + n ; ++i) {
@@ -111,34 +139,6 @@ size_t verify_sort_kf(T *keys, size_t n) {
 	printf("OK.\n");
 
 	return 0;
-}
-
-static void* read_file(const char *filename, size_t *limit, int use_mmap, int use_huge) {
-	void *keys = NULL;
-	size_t bytes = 0;
-
-	FILE *f = fopen(filename, "rb");
-	if (f) {
-		fseek(f, 0, SEEK_END);
-		bytes = ftell(f);
-		fseek(f, 0, SEEK_SET);
-
-		if (*limit > 0 && *limit < bytes)
-			bytes = *limit;
-
-		keys = my_allocate(bytes, use_mmap, use_huge, "input.");
-		assert(keys);
-
-		long rnum = fread(keys, bytes, 1, f);
-		fclose(f);
-		if (rnum != 1) {
-			free(keys);
-			return NULL;
-		}
-	}
-
-	*limit = bytes;
-	return keys;
 }
 
 template <typename T>
