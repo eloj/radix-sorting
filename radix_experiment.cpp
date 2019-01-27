@@ -79,7 +79,11 @@ void* my_allocate(size_t size, int use_mmap, int use_huge, const char *usage) {
 template <typename T>
 void print_sort(T *keys, size_t offset, size_t n) {
 	for (size_t i = offset ; i < offset + n ; ++i) {
-		printf("%08zu: %08x", i, (uint32_t)keys[i]);
+		if constexpr(sizeof(T) > 4) {
+			printf("%08zu: %016" PRIx64, i, (uint64_t)keys[i]);
+		} else {
+			printf("%08zu: %08" PRIx32, i, (uint32_t)keys[i]);
+		}
 		// printf(" int:%d", (int32_t)keys[i]);
 		// printf(" float:%f ", *(reinterpret_cast<float*>(keys + i)));
 		printf("\n");
@@ -100,25 +104,6 @@ size_t verify_sort_kf(T *keys, size_t n) {
 	printf("OK.\n");
 
 	return 0;
-}
-
-template <typename T>
-T* test_radix_sort(T* src, T* aux, size_t n, struct timespec *tp_start, struct timespec *tp_end) {
-	if (tp_start)
-		clock_gettime(CLOCK_MONOTONIC_RAW, tp_start);
-
-	auto *sorted = radix_sort(src, aux, n, true);
-
-	if (tp_end)
-		clock_gettime(CLOCK_MONOTONIC_RAW, tp_end);
-
-#ifdef VERIFY_SORT
-	if (verify_sort_kf(sorted, n) != 0) {
-		return NULL;
-	}
-#endif
-
-	return sorted;
 }
 
 static void* read_file(const char *filename, size_t *limit, int use_mmap, int use_huge) {
@@ -149,6 +134,67 @@ static void* read_file(const char *filename, size_t *limit, int use_mmap, int us
 	return keys;
 }
 
+template <typename T>
+int test_radix_sort(const char *filename, size_t entries, int use_mmap, int use_huge, uint64_t value_mask) {
+
+	size_t bytes = sizeof(T)*entries;
+
+	T *src = (T*)read_file(filename, &bytes, use_mmap, use_huge);
+	assert(src);
+	T *aux = (T*)my_allocate(bytes, use_mmap, use_huge, "auxilary buffer.");
+	assert(aux);
+
+	size_t n = bytes / sizeof(*src);
+
+	// Mangle input to demonstrate column selection.
+	if (value_mask != (uint64_t)-1) {
+		printf("Applying value mask to input.\n");
+		for (size_t i=0 ; i < n ; ++i) {
+			src[i] &= value_mask;
+		}
+	}
+
+	struct timespec tp_start;
+	struct timespec tp_end;
+
+	printf("Sorting %zu integers...\n", n);
+	clock_gettime(CLOCK_MONOTONIC_RAW, &tp_start);
+	auto *sorted = radix_sort(src, aux, n, true);
+	clock_gettime(CLOCK_MONOTONIC_RAW, &tp_end);
+
+#ifdef VERIFY_SORT
+	if (verify_sort_kf(sorted, n) != 0) {
+		return 1;
+	}
+#endif
+
+	// Debug print head and tail of the sorted list
+	size_t nprint = 20;
+	if (n <= nprint) {
+		print_sort(sorted, 0, std::min(n, nprint));
+	} else {
+		print_sort(sorted, 0, nprint/2);
+		printf("[...]\n");
+		int left = std::min(nprint/2, n - nprint/2);
+		print_sort(sorted, n - left, left);
+	}
+
+	struct timespec tp_res;
+	timespec_diff(&tp_start, &tp_end, &tp_res);
+	double time_ms = (tp_res.tv_sec * 1000) + (tp_res.tv_nsec / 1.0e6f);
+	printf("Sorted %zu entries in %.4f ms\n", n, time_ms);
+
+	if (use_mmap) {
+		munmap(src, bytes);
+		munmap(aux, bytes);
+	} else {
+		free(src);
+		free(aux);
+	}
+	return 0;
+}
+
+
 int main(int argc, char *argv[])
 {
 	int entries = argc > 1 ? atoi(argv[1]) : 0;
@@ -168,54 +214,7 @@ int main(int argc, char *argv[])
 
 	printf("src='%s', entries=%d, use_mmap=%d, use_huge=%d, mask=0x%08lx \n", src_fn, entries, use_mmap, use_huge, value_mask);
 
-	size_t bytes = 4*entries;
+	int res = test_radix_sort<uint32_t>(src_fn, entries, use_mmap, use_huge, value_mask);
 
-	uint32_t *src = (uint32_t*)read_file(src_fn, &bytes, use_mmap, use_huge);
-	assert(src);
-	uint32_t *aux = (uint32_t*)my_allocate(bytes, use_mmap, use_huge, "auxilary buffer.");
-	assert(aux);
-
-	size_t n = bytes / sizeof(*src);
-
-	// Mangle input to demonstrate column selection.
-	if (value_mask != (uint64_t)-1) {
-		printf("Applying value mask to input.\n");
-		for (size_t i=0 ; i < n ; ++i) {
-			src[i] &= value_mask;
-		}
-	}
-
-	struct timespec tp_start;
-	struct timespec tp_end;
-
-	printf("Sorting %zu integers...\n", n);
-	auto *sorted = test_radix_sort(src, aux, n, &tp_start, &tp_end);
-
-	if (sorted) {
-		// Debug print head and tail of the sorted list
-		size_t nprint = 20;
-		if (n <= nprint) {
-			print_sort(sorted, 0, std::min(n, nprint));
-		} else {
-			print_sort(sorted, 0, nprint/2);
-			printf("[...]\n");
-			int left = std::min(nprint/2, n - nprint/2);
-			print_sort(sorted, n - left, left);
-		}
-
-		struct timespec tp_res;
-		timespec_diff(&tp_start, &tp_end, &tp_res);
-		double time_ms = (tp_res.tv_sec * 1000) + (tp_res.tv_nsec / 1.0e6f);
-		printf("Sorted %zu entries in %.4f ms\n", n, time_ms);
-	}
-
-	if (use_mmap) {
-		munmap(src, bytes);
-		munmap(aux, bytes);
-	} else {
-		free(src);
-		free(aux);
-	}
-
-	return 0;
+	return res;
 }
