@@ -19,6 +19,7 @@ All code is provided under the [MIT License](LICENSE).
 ## Table of Contents
 
 + [Motivation](#motivation)
++ [Building](#building)
 + [From the top; Counting sort](#counting-sort)
     + [Listing 1](#listing_cs8): In-place
     + [Listing 2](#listing_cs8s): Stepping stone
@@ -57,6 +58,22 @@ This code can sort 40 million 32-bit integers in under half a second using a sin
 core of an [Intel i5-3570T](https://ark.intel.com/products/65521/Intel-Core-i5-3570T-Processor-6M-Cache-up-to-3_30-GHz),
 a low-TDP CPU from 2012 using DDR3-1333. `std::sort` requires ~3.5s for the same task (with the
 caveat that it's _in-place_, and see [CPU Bugs](#cpu-bugs) for an update).
+
+## <a name="building"></a> Building
+
+The included `Makefile` will build all the code on any reasonably up-to-date linux installation.
+
+```bash
+$ make
+```
+
+The default build enables a lot of compiler warning flags and optimizations, but care
+has been taken to make sure the examples are easy to build and run individually too;
+
+```bash
+$ cc radix_sort_u32.c -o example1
+$ ./example1
+```
 
 ## <a name="counting-sort"></a> From the top; Counting sort
 
