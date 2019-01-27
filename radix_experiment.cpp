@@ -1,6 +1,7 @@
 /*
-	TODO: mmap support is half-broken as it's not applied to aux buffer.
-	TODO: static error if called on unsupported type.
+	Basic test program for running experiments.
+
+	Note: Will not compile on WIN32 in current state.
 */
 #include <cstdio>
 #include <cstdlib>
@@ -10,12 +11,11 @@
 #include <cmath>
 #include <cassert>
 #include <algorithm>
+#include <sys/mman.h> // for mmap
 
 #include "radix_sort.hpp"
 
-#ifdef MMAP
-#include <sys/mman.h> // for mmap
-#endif
+static int RADIX_MMAP_FLAGS = MAP_PRIVATE | MAP_ANONYMOUS | MAP_NORESERVE | MAP_POPULATE; // | MAP_HUGE_2MB
 
 #ifdef WIN32
 #include <windows.h>
@@ -45,6 +45,31 @@ void timespec_diff(struct timespec *start, struct timespec *stop,
 	}
 }
 
+void* my_allocate(size_t size, int use_mmap, int use_huge, const char *usage) {
+	void *mem = NULL;
+
+	if (use_mmap) {
+		mem = (uint32_t*)mmap(NULL, size, PROT_READ | PROT_WRITE, RADIX_MMAP_FLAGS, -1, 0);
+		assert(mem && mem != MAP_FAILED);
+		printf("Mapped memory at %p, %zu bytes for %s\n", mem, size, usage);
+	} else {
+		printf("Allocating %zu bytes for %s.\n", size, usage);
+		if (use_huge) {
+			int res = posix_memalign((void**)&mem, 1L << 21, size);
+			if (res) {
+				fprintf(stderr, "Failed to allocate: %d\n", res); // ENOMEM or EINVAL
+				abort();
+			}
+			madvise(mem, size, MADV_HUGEPAGE);
+			printf("Requested MADV_HUGEPAGE for pages.\n");
+		} else {
+			mem = malloc(size);
+		}
+		assert(mem);
+	}
+	return mem;
+}
+
 template <typename T>
 void print_sort(T *keys, size_t n) {
 	for (size_t i = 0 ; i < n ; ++i) {
@@ -72,31 +97,17 @@ size_t verify_sort_kf(T *keys, size_t n) {
 }
 
 template <typename T>
-int test_radix_sort(T* src, size_t n, struct timespec *tp_start, struct timespec *tp_end) {
+int test_radix_sort(T* src, T* aux, size_t n, struct timespec *tp_start, struct timespec *tp_end) {
 	if (tp_start)
 		clock_gettime(CLOCK_MONOTONIC_RAW, tp_start);
 
-	T *aux = new T[n];
-#if 0
-	int flags = MAP_HUGETLB | MAP_NORESERVE; // | MAP_HUGE_2MB; // MAP_NORESERVE
-	T *aux = (T*)mmap(NULL, n*4, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS | flags, -1, 0);
-#endif
-
 	auto *sorted = radix_sort(src, aux, n, true);
-
-	if (sorted == aux) {
-		printf("Copying aux buffer.\n");
-		memcpy(src, aux, sizeof(T) * n);
-	}
-
-	delete[](aux);
-	//	munmap(aux, n*4);
 
 	if (tp_end)
 		clock_gettime(CLOCK_MONOTONIC_RAW, tp_end);
 
 #ifdef VERIFY_SORT
-	if (verify_sort_kf(src, n) != 0) {
+	if (verify_sort_kf(sorted, n) != 0) {
 		return 1;
 	}
 #endif
@@ -104,7 +115,7 @@ int test_radix_sort(T* src, size_t n, struct timespec *tp_start, struct timespec
 	return 0;
 }
 
-static void* read_file(const char *filename, size_t *limit, int use_mmap) {
+static void* read_file(const char *filename, size_t *limit, int use_mmap, int use_huge) {
 	void *keys = NULL;
 	size_t bytes = 0;
 
@@ -117,22 +128,9 @@ static void* read_file(const char *filename, size_t *limit, int use_mmap) {
 		if (*limit > 0 && *limit < bytes)
 			bytes = *limit;
 
-#if MMAP
-		if (use_mmap) {
-			int flags = MAP_HUGETLB | MAP_NORESERVE; // | MAP_HUGE_2MB; // MAP_NORESERVE
-			keys = mmap(NULL, bytes, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS | flags, -1, 0);
-			if (!keys || (keys == MAP_FAILED)) {
-				printf("mmap failed.\n");
-				return NULL;
-			}
-			printf("Mapping memory at %p, reading %zu bytes.\n", keys, bytes);
-		} else {
-#endif
-		printf("Allocating and reading %zu bytes.\n", bytes);
-		keys = malloc(bytes);
-#if MMAP
-		}
-#endif
+		keys = my_allocate(bytes, use_mmap, use_huge, "input.");
+		assert(keys);
+
 		long rnum = fread(keys, bytes, 1, f);
 		fclose(f);
 		if (rnum != 1) {
@@ -149,14 +147,21 @@ int main(int argc, char *argv[])
 {
 	int entries = argc > 1 ? atoi(argv[1]) : 0;
 	int use_mmap = argc > 2 ? atoi(argv[2]) : 0;
+	int use_huge = argc > 3 ? atoi(argv[3]) : 0;
+
 	const char *src_fn = "40M_32bit_keys.dat";
 
-	printf("src='%s', entries=%d, use_mmap=%d\n", src_fn, entries, use_mmap);
+	if (use_huge)
+		RADIX_MMAP_FLAGS |= MAP_HUGETLB;
+
+	printf("src='%s', entries=%d, use_mmap=%d, use_huge=%d\n", src_fn, entries, use_mmap, use_huge);
 
 	size_t bytes = 4*entries;
 
-	uint32_t *src = (uint32_t*)read_file(src_fn, &bytes, use_mmap);
+	uint32_t *src = (uint32_t*)read_file(src_fn, &bytes, use_mmap, use_huge);
 	assert(src);
+	uint32_t *aux = (uint32_t*)my_allocate(bytes, use_mmap, use_huge, "auxilary buffer.");
+	assert(aux);
 
 	size_t n = bytes / sizeof(*src);
 
@@ -171,14 +176,7 @@ int main(int argc, char *argv[])
 	struct timespec tp_end;
 
 	printf("Sorting...\n");
-	test_radix_sort(src, n, &tp_start, &tp_end);
-#if 0
-	clock_gettime(CLOCK_MONOTONIC_RAW, &tp_start);
-	std::sort(src, src + n, [](const uint32_t a, const uint32_t b) __attribute__((pure, hot)) {
-		return a < b;
-	});
-	clock_gettime(CLOCK_MONOTONIC_RAW, &tp_end);
-#endif
+	test_radix_sort(src, aux, n, &tp_start, &tp_end);
 
 	// Debug print some of the sorted list
 	size_t nprint = 40;
@@ -189,12 +187,12 @@ int main(int argc, char *argv[])
 	double time_ms = (tp_res.tv_sec * 1000) + (tp_res.tv_nsec / 1.0e6f);
 	printf("Sorted %zu entries in %.4f ms\n", n, time_ms);
 
-	if (!use_mmap) {
-		free(src);
-	} else {
-#if MMAP
+	if (use_mmap) {
 		munmap(src, bytes);
-#endif
+		munmap(aux, bytes);
+	} else {
+		free(src);
+		free(aux);
 	}
 
 	return 0;
