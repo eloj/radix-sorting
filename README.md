@@ -78,6 +78,9 @@ $ ./example1
 The test program and the benchmark expects a file named `40M_32bit_keys.dat` to exist. This file is automatically
 generated when running `make` or `make genkeys`.
 
+See the section on [C++ Implementation](#cpp-implementation) for more information on how to use the test program
+and benchmark.
+
 ## <a name="counting-sort"></a> From the top; Counting sort
 
 Possibly the simplest way to sort an array of integers, is to simply count how many there are
@@ -776,6 +779,30 @@ so this is still probably the reason, and I was simply wrong to think hugepages 
 _TODO: This code is very much a work in progress, used to test various techniques, and does NOT represent a final 'product'._
 
 [radix_experiment.cpp](radix_experiment.cpp)
+
+By default this code builds into an executable called `radix`. This is a test harness of sorts, with some options
+to let you test different setups.
+
+```bash
+$ ./radix 0
+```
+
+Run with default options. The argument is the number of integers to sort (from `40M_32bit_keys.dat`), with zero
+meaning all.
+
+```bash
+$ ./radix 0 1 0 0x00ffffff
+```
+
+The second argument is a flag controlling the use of `mmap` to map the input file and allocate memory.
+
+The third argument is a flag that controls the use of [hugepages](https://www.kernel.org/doc/Documentation/vm/hugetlbpage.txt),
+i.e very large memory pages. The presence of this feature is not guaranteed, and allocation may fail on some systems when
+used in combination with `mmap`.
+
+The fourth argument is a mask expressed in hexadecimal that will be bitwise `AND`-ed against the input before it's
+sorted. This can be used to demonstrate the column-skipping functionality, e.g by passing 0x00FFFFFF the MSD column
+should be skipped.
 
 ### <a name="cpp-benchmark"></a> Benchmarks
 
