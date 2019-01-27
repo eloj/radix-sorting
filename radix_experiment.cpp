@@ -71,8 +71,8 @@ void* my_allocate(size_t size, int use_mmap, int use_huge, const char *usage) {
 }
 
 template <typename T>
-void print_sort(T *keys, size_t n) {
-	for (size_t i = 0 ; i < n ; ++i) {
+void print_sort(T *keys, size_t offset, size_t n) {
+	for (size_t i = offset ; i < offset + n ; ++i) {
 		printf("%08zu: %08x", i, (uint32_t)keys[i]);
 		// printf(" int:%d", (int32_t)keys[i]);
 		// printf(" float:%f ", *(reinterpret_cast<float*>(keys + i)));
@@ -178,9 +178,16 @@ int main(int argc, char *argv[])
 	printf("Sorting...\n");
 	test_radix_sort(src, aux, n, &tp_start, &tp_end);
 
-	// Debug print some of the sorted list
-	size_t nprint = 40;
-	print_sort(src, std::min(n, nprint));
+	// Debug print head and tail of the sorted list
+	size_t nprint = 20;
+	if (n <= nprint) {
+		print_sort(src, 0, std::min(n, nprint));
+	} else {
+		print_sort(src, 0, nprint/2);
+		printf("[...]\n");
+		int left = std::min(nprint/2, n - nprint/2);
+		print_sort(src, n - left, left);
+	}
 
 	struct timespec tp_res;
 	timespec_diff(&tp_start, &tp_end, &tp_res);
