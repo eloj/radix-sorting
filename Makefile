@@ -49,7 +49,7 @@ examples=counting_sort_8 counting_sort_8s counting_sort_rec_sk \
 all: $(examples) radix radix_bench
 
 test: radix genkeys
-	${TEST_PREFIX} ./radix $N
+	${TEST_PREFIX} ./radix 0 1
 
 bench: radix_bench genkeys
 	./radix_bench --benchmark_counters_tabular=true
@@ -64,7 +64,7 @@ opt: clean
 	@echo -e ${YELLOW}Building with profile generation...${NC}
 	@LTO=1 PROFILEGEN=on make radix
 	@echo -e ${YELLOW}Running test to collect profile data...${NC}
-	@./radix $N >/dev/null
+	@./radix 0 1 >/dev/null
 	@echo -e ${YELLOW}Removing old binaries${NC}
 	@rm ./radix
 	@echo -e ${YELLOW}Recompiling using profile data...${NC}
