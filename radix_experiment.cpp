@@ -1,6 +1,12 @@
 /*
 	Basic test program for running experiments.
 
+	$ ./radix <entries> <use_mmap> <use_huge> <hex-mask>
+
+	Example:
+
+	$ ./radix 0 1 0 0x00FFFFFF
+
 	Note: Will not compile on WIN32 in current state.
 */
 #include <cstdio>
@@ -85,7 +91,7 @@ size_t verify_sort_kf(T *keys, size_t n) {
 	printf("Verifying sort... ");
 	for (size_t i = 1 ; i < n ; ++i) {
 		if (keys[i-1] > keys[i]) {
-			printf("Sort if array at %p invalid.\n", keys);
+			printf("Sort of array invalid at index %zu, %p.\n", i, keys);
 			printf("%zu: %" PRIx64 " > ", i-1, (uint64_t)keys[i-1]);
 			printf("%zu: %" PRIx64 "\n", i, (uint64_t)keys[i]);
 			return 1;
@@ -97,7 +103,7 @@ size_t verify_sort_kf(T *keys, size_t n) {
 }
 
 template <typename T>
-int test_radix_sort(T* src, T* aux, size_t n, struct timespec *tp_start, struct timespec *tp_end) {
+T* test_radix_sort(T* src, T* aux, size_t n, struct timespec *tp_start, struct timespec *tp_end) {
 	if (tp_start)
 		clock_gettime(CLOCK_MONOTONIC_RAW, tp_start);
 
@@ -108,11 +114,11 @@ int test_radix_sort(T* src, T* aux, size_t n, struct timespec *tp_start, struct 
 
 #ifdef VERIFY_SORT
 	if (verify_sort_kf(sorted, n) != 0) {
-		return 1;
+		return NULL;
 	}
 #endif
 
-	return 0;
+	return sorted;
 }
 
 static void* read_file(const char *filename, size_t *limit, int use_mmap, int use_huge) {
@@ -148,13 +154,19 @@ int main(int argc, char *argv[])
 	int entries = argc > 1 ? atoi(argv[1]) : 0;
 	int use_mmap = argc > 2 ? atoi(argv[2]) : 0;
 	int use_huge = argc > 3 ? atoi(argv[3]) : 0;
+	uint64_t value_mask = argc > 4 ? strtoull(argv[4], NULL, 16) : -1;
+
+	if (argc == 1) {
+		printf("Usage: %s <count> [<use_mmap> <use_huge> <hex-mask>]\n", argv[0]);
+		exit(0);
+	}
 
 	const char *src_fn = "40M_32bit_keys.dat";
 
 	if (use_huge)
 		RADIX_MMAP_FLAGS |= MAP_HUGETLB;
 
-	printf("src='%s', entries=%d, use_mmap=%d, use_huge=%d\n", src_fn, entries, use_mmap, use_huge);
+	printf("src='%s', entries=%d, use_mmap=%d, use_huge=%d, mask=0x%08lx \n", src_fn, entries, use_mmap, use_huge, value_mask);
 
 	size_t bytes = 4*entries;
 
@@ -165,34 +177,37 @@ int main(int argc, char *argv[])
 
 	size_t n = bytes / sizeof(*src);
 
-#if 0
 	// Mangle input to demonstrate column selection.
-	for (size_t i=0 ; i < n ; ++i) {
-		src[i] &= 0x00FFFFFF;
+	if (value_mask != (uint64_t)-1) {
+		printf("Applying value mask to input.\n");
+		for (size_t i=0 ; i < n ; ++i) {
+			src[i] &= value_mask;
+		}
 	}
-#endif
 
 	struct timespec tp_start;
 	struct timespec tp_end;
 
-	printf("Sorting...\n");
-	test_radix_sort(src, aux, n, &tp_start, &tp_end);
+	printf("Sorting %zu integers...\n", n);
+	auto *sorted = test_radix_sort(src, aux, n, &tp_start, &tp_end);
 
-	// Debug print head and tail of the sorted list
-	size_t nprint = 20;
-	if (n <= nprint) {
-		print_sort(src, 0, std::min(n, nprint));
-	} else {
-		print_sort(src, 0, nprint/2);
-		printf("[...]\n");
-		int left = std::min(nprint/2, n - nprint/2);
-		print_sort(src, n - left, left);
+	if (sorted) {
+		// Debug print head and tail of the sorted list
+		size_t nprint = 20;
+		if (n <= nprint) {
+			print_sort(sorted, 0, std::min(n, nprint));
+		} else {
+			print_sort(sorted, 0, nprint/2);
+			printf("[...]\n");
+			int left = std::min(nprint/2, n - nprint/2);
+			print_sort(sorted, n - left, left);
+		}
+
+		struct timespec tp_res;
+		timespec_diff(&tp_start, &tp_end, &tp_res);
+		double time_ms = (tp_res.tv_sec * 1000) + (tp_res.tv_nsec / 1.0e6f);
+		printf("Sorted %zu entries in %.4f ms\n", n, time_ms);
 	}
-
-	struct timespec tp_res;
-	timespec_diff(&tp_start, &tp_end, &tp_res);
-	double time_ms = (tp_res.tv_sec * 1000) + (tp_res.tv_nsec / 1.0e6f);
-	printf("Sorted %zu entries in %.4f ms\n", n, time_ms);
 
 	if (use_mmap) {
 		munmap(src, bytes);
