@@ -90,6 +90,13 @@ void print_sort(T *keys, size_t offset, size_t n) {
 	}
 }
 
+template <>
+void print_sort(float *keys, size_t offset, size_t n) {
+	for (size_t i = offset ; i < offset + n ; ++i) {
+		printf("%08zu: %f\n", i, keys[i]);
+	}
+}
+
 template <typename T>
 size_t verify_sort_kf(T *keys, size_t n) {
 	printf("Verifying sort... ");
@@ -150,7 +157,11 @@ int test_radix_sort(const char *filename, size_t entries, int use_mmap, int use_
 	if (value_mask != (uint64_t)-1) {
 		printf("Applying value mask to input.\n");
 		for (size_t i=0 ; i < n ; ++i) {
-			src[i] &= value_mask;
+			// src[i] &= value_mask;
+			uint64_t buf;
+			memcpy(&buf, src + i, sizeof(T));
+			buf &= value_mask;
+			memcpy(src + i, &buf, sizeof(T));
 		}
 	}
 
