@@ -75,6 +75,9 @@ $ cc radix_sort_u32.c -o example1
 $ ./example1
 ```
 
+The test program and the benchmark expects a file named `40M_32bit_keys.dat` to exist. This file is automatically
+generated when running `make` or `make genkeys`.
+
 ## <a name="counting-sort"></a> From the top; Counting sort
 
 Possibly the simplest way to sort an array of integers, is to simply count how many there are
