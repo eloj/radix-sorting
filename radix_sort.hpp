@@ -40,22 +40,33 @@ static T* radix_sort_internal(T * RESTRICT src, T * RESTRICT aux, size_t n, KeyF
 	if (n < 2)
 		return src;
 
-	size_t n_unsorted = n;
 
 	// Histograms
-	for (size_t i = 0 ; i < n ; ++i) {
-		// pre-sorted detection: TODO: try doubling loop, only check in first.
-		KeyType keyi = kf(src[i]);
-		if ((i < n - 1) && (keyi <= kf(src[i+1]))) {
-			--n_unsorted;
+	{
+		size_t i = 0;
+		for ( ; i < n ; ++i) {
+			KeyType keyi = kf(src[i]);
+			// Splitting the loop in two to get rid of this conditional (in the second) is
+			// a slight win ~40M inputs, but unfortunately a loss below that (i5-3570T)
+			for (int j=0 ; j < wc ; ++j) {
+				++hist[j][(keyi >> (j << 3)) & 0xFF];
+			}
+			if ((i < n - 1) && (keyi > kf(src[i+1]))) {
+				++i;
+				break;
+			}
 		}
-		for (int j=0 ; j < wc ; ++j) {
-			++hist[j][(keyi >> (j << 3)) & 0xFF];
+		if (i < n) {
+			for ( ; i < n ; ++i) {
+				KeyType keyi = kf(src[i]);
+				__builtin_prefetch(&src[i+1], 0, 0);
+				for (int j=0 ; j < wc ; ++j) {
+					++hist[j][(keyi >> (j << 3)) & 0xFF];
+				}
+			}
+		} else {
+			return src;
 		}
-	}
-
-	if (n_unsorted < 2) {
-		return src;
 	}
 
 	// Sample first key to determine if any columns can be skipped
