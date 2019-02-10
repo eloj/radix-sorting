@@ -766,13 +766,9 @@ update to 0x1f (dated 2018-02-07), issued to mitigate [Spectre](https://en.wikip
 and [Meltdown](https://en.wikipedia.org/wiki/Meltdown_(security_vulnerability)), possibly in combination with linux kernel changes,
 decreased performance _significantly_. The ~460ms radix sort now took ~630ms, and the `std::sort` went from 3.5s to 5s.
 
-Unfortunately I have not been able to pinpoint the exact reason for this large performance delta. My initial hypothesis
-was that it could be attributed to increased cost of [TLB](https://en.wikipedia.org/wiki/Translation_lookaside_buffer) interactions due
-to Meltdown mitigations, including [Kernel page-table isolation](https://en.wikipedia.org/wiki/Kernel_page-table_isolation) (KPTI),
-but then I would expect to get _some_ performance back from using hugepages, which I did not.
-
-Ivy Bridge does lack INVPCID which [makes it take an extra hit from the Meltdown mitigations](https://arstechnica.com/gadgets/2018/01/heres-how-and-why-the-spectre-and-meltdown-patches-will-hurt-performance/),
-so this is still probably the reason, and I was simply wrong to think hugepages would help with this.
+Fortunately an upgrade from kernel 4.18.16 to 4.20.7, still on the 0x1f microcode, clawed back much performance and
+a normal `malloc` backed run now takes ~450ms again, while the fastest configuration using `mmap` is able to
+sort 40M 32-bit integers in ~410ms on this machine.
 
 ## <a name="cpp-implementation"></a> C++ Implementation
 
