@@ -42,7 +42,6 @@ All code is provided under the [MIT License](LICENSE).
     + [Key rewriting](#key-rewriting)
     + [Prefetching](#prefetching)
     + [Vectorized histogramming](#vectorization)
-    + [CPU Bugs](#cpu-bugs)
 + [C++ Implementation](#cpp-implementation)
     + [Benchmarks](#cpp-benchmark)
 + [Esoterics](#esoterics)
@@ -57,7 +56,7 @@ All code is provided under the [MIT License](LICENSE).
 This code can sort 40 million 32-bit integers in under half a second using a single
 core of an [Intel i5-3570T](https://ark.intel.com/products/65521/Intel-Core-i5-3570T-Processor-6M-Cache-up-to-3_30-GHz),
 a low-TDP CPU from 2012 using DDR3-1333. `std::sort` requires ~3.5s for the same task (with the
-caveat that it's _in-place_, and see [CPU Bugs](#cpu-bugs) for an update).
+caveat that it's _in-place_).
 
 ## <a name="building"></a> Building
 
@@ -758,17 +757,6 @@ to a vectorized implementation that is worth it in practice. The issue seems to 
 gather/scatter support. I'm looking forward to be proven wrong about this in the future.
 
 For other architectures this may be more viable.
-
-### <a name="cpu-bugs"></a> CPU Bugs
-
-The numbers quoted in the [motivation](#motivation) were taken on intel microcode 06-3a-09 version 0x1c (Ivy Bridge). A later
-update to 0x1f (dated 2018-02-07), issued to mitigate [Spectre](https://en.wikipedia.org/wiki/Spectre_(security_vulnerability))
-and [Meltdown](https://en.wikipedia.org/wiki/Meltdown_(security_vulnerability)), possibly in combination with linux kernel changes,
-decreased performance _significantly_. The ~460ms radix sort now took ~630ms, and the `std::sort` went from 3.5s to 5s.
-
-Fortunately an upgrade from kernel 4.18.16 to 4.20.7, still on the 0x1f microcode, clawed back much performance and
-a normal `malloc` backed run now takes ~450ms again, while the fastest configuration using `mmap` is able to
-sort 40M 32-bit integers in ~410ms on this machine.
 
 ## <a name="cpp-implementation"></a> C++ Implementation
 
