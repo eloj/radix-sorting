@@ -1,0 +1,230 @@
+Linux eddy-XPS-13-9370 4.15.0-45-generic #48-Ubuntu SMP Tue Jan 29 16:28:13 UTC 2019 x86_64 x86_64 x86_64 GNU/Linux
+e98256e6799616796aa48ea7ce3d4048c39d926d
+Architecture:        x86_64
+CPU op-mode(s):      32-bit, 64-bit
+Byte Order:          Little Endian
+CPU(s):              8
+On-line CPU(s) list: 0-7
+Thread(s) per core:  2
+Core(s) per socket:  4
+Socket(s):           1
+NUMA node(s):        1
+Vendor ID:           GenuineIntel
+CPU family:          6
+Model:               142
+Model name:          Intel(R) Core(TM) i7-8550U CPU @ 1.80GHz
+Stepping:            10
+CPU MHz:             900.036
+CPU max MHz:         4000,0000
+CPU min MHz:         400,0000
+BogoMIPS:            3984.00
+Virtualization:      VT-x
+L1d cache:           32K
+L1i cache:           32K
+L2 cache:            256K
+L3 cache:            8192K
+NUMA node0 CPU(s):   0-7
+Flags:               fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf tsc_known_freq pni pclmulqdq dtes64 monitor ds_cpl vmx est tm2 ssse3 sdbg fma cx16 xtpr pdcm pcid sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch cpuid_fault epb invpcid_single pti ssbd ibrs ibpb stibp tpr_shadow vnmi flexpriority ept vpid fsgsbase tsc_adjust bmi1 avx2 smep bmi2 erms invpcid mpx rdseed adx smap clflushopt intel_pt xsaveopt xsavec xgetbv1 xsaves dtherm ida arat pln pts hwp hwp_notify hwp_act_window hwp_epp flush_l1d
+src='40M_32bit_keys.dat', entries=0, use_mmap=0, use_huge=0, mask=0xffffffffffffffff 
+Allocating 160000000 bytes for input..
+Allocating 160000000 bytes for auxilary buffer..
+Sorting 40000000 integers...
+Verifying sort... OK.
+00000000: 000000a2
+00000001: 000000ab
+00000002: 0000017c
+00000003: 00000201
+00000004: 00000221
+00000005: 000002af
+00000006: 000002da
+00000007: 00000323
+00000008: 0000032c
+00000009: 0000036a
+[...]
+39999990: fffffbb5
+39999991: fffffc31
+39999992: fffffcf7
+39999993: fffffd13
+39999994: fffffdff
+39999995: fffffe40
+39999996: fffffe5d
+39999997: fffffefb
+39999998: ffffff0b
+39999999: ffffffb2
+Sorted 40000000 entries in 304.1498 ms
+
+ Performance counter stats for './radix 0 0 0':
+
+        415,433271      task-clock (msec)         #    0,999 CPUs utilized          
+                 0      context-switches          #    0,000 K/sec                  
+                 0      cpu-migrations            #    0,000 K/sec                  
+            78 182      page-faults               #    0,188 M/sec                  
+     1 395 345 062      cycles                    #    3,359 GHz                    
+     2 561 443 058      instructions              #    1,84  insn per cycle         
+       146 700 582      branches                  #  353,127 M/sec                  
+           177 397      branch-misses             #    0,12% of all branches        
+
+       0,415894298 seconds time elapsed
+
+src='40M_32bit_keys.dat', entries=0, use_mmap=1, use_huge=0, mask=0xffffffffffffffff 
+Mapped memory at 0x7fa516388000, 160000000 bytes for input.
+Mapped memory at 0x7fa50caf1000, 160000000 bytes for auxilary buffer.
+Sorting 40000000 integers...
+Verifying sort... OK.
+00000000: 000000a2
+00000001: 000000ab
+00000002: 0000017c
+00000003: 00000201
+00000004: 00000221
+00000005: 000002af
+00000006: 000002da
+00000007: 00000323
+00000008: 0000032c
+00000009: 0000036a
+[...]
+39999990: fffffbb5
+39999991: fffffc31
+39999992: fffffcf7
+39999993: fffffd13
+39999994: fffffdff
+39999995: fffffe40
+39999996: fffffe5d
+39999997: fffffefb
+39999998: ffffff0b
+39999999: ffffffb2
+Sorted 40000000 entries in 302.1642 ms
+
+ Performance counter stats for './radix 0 1 0':
+
+        395,666817      task-clock (msec)         #    0,994 CPUs utilized          
+               112      context-switches          #    0,283 K/sec                  
+                 0      cpu-migrations            #    0,000 K/sec                  
+                58      page-faults               #    0,147 K/sec                  
+     1 481 225 289      cycles                    #    3,744 GHz                    
+     2 588 597 976      instructions              #    1,75  insn per cycle         
+       148 432 286      branches                  #  375,145 M/sec                  
+           146 665      branch-misses             #    0,10% of all branches        
+
+       0,397922713 seconds time elapsed
+
+src='40M_32bit_keys.dat', entries=0, use_mmap=0, use_huge=1, mask=0xffffffffffffffff 
+Allocating 160000000 bytes for input..
+Requested MADV_HUGEPAGE for pages.
+Allocating 160000000 bytes for auxilary buffer..
+Requested MADV_HUGEPAGE for pages.
+Sorting 40000000 integers...
+Verifying sort... OK.
+00000000: 000000a2
+00000001: 000000ab
+00000002: 0000017c
+00000003: 00000201
+00000004: 00000221
+00000005: 000002af
+00000006: 000002da
+00000007: 00000323
+00000008: 0000032c
+00000009: 0000036a
+[...]
+39999990: fffffbb5
+39999991: fffffc31
+39999992: fffffcf7
+39999993: fffffd13
+39999994: fffffdff
+39999995: fffffe40
+39999996: fffffe5d
+39999997: fffffefb
+39999998: ffffff0b
+39999999: ffffffb2
+Sorted 40000000 entries in 269.7377 ms
+
+ Performance counter stats for './radix 0 0 1':
+
+        315,559221      task-clock (msec)         #    0,999 CPUs utilized          
+                 0      context-switches          #    0,000 K/sec                  
+                 0      cpu-migrations            #    0,000 K/sec                  
+               515      page-faults               #    0,002 M/sec                  
+     1 153 897 627      cycles                    #    3,657 GHz                    
+     2 341 953 964      instructions              #    2,03  insn per cycle         
+       110 107 845      branches                  #  348,929 M/sec                  
+            14 832      branch-misses             #    0,01% of all branches        
+
+       0,315774520 seconds time elapsed
+
+src='40M_32bit_keys.dat', entries=0, use_mmap=1, use_huge=1, mask=0xffffffffffffffff 
+Mapped memory at 0x7f6835200000, 160000000 bytes for input.
+Mapped memory at 0x7f682b800000, 160000000 bytes for auxilary buffer.
+Sorting 40000000 integers...
+Verifying sort... OK.
+00000000: 000000a2
+00000001: 000000ab
+00000002: 0000017c
+00000003: 00000201
+00000004: 00000221
+00000005: 000002af
+00000006: 000002da
+00000007: 00000323
+00000008: 0000032c
+00000009: 0000036a
+[...]
+39999990: fffffbb5
+39999991: fffffc31
+39999992: fffffcf7
+39999993: fffffd13
+39999994: fffffdff
+39999995: fffffe40
+39999996: fffffe5d
+39999997: fffffefb
+39999998: ffffff0b
+39999999: ffffffb2
+Sorted 40000000 entries in 253.8225 ms
+
+ Performance counter stats for './radix 0 1 1':
+
+        311,560421      task-clock (msec)         #    0,999 CPUs utilized          
+                 2      context-switches          #    0,006 K/sec                  
+                 0      cpu-migrations            #    0,000 K/sec                  
+                58      page-faults               #    0,186 K/sec                  
+     1 171 944 963      cycles                    #    3,762 GHz                    
+     2 338 811 029      instructions              #    2,00  insn per cycle         
+       109 677 619      branches                  #  352,027 M/sec                  
+            11 734      branch-misses             #    0,01% of all branches        
+
+       0,311831016 seconds time elapsed
+
+./radix_bench --benchmark_counters_tabular=true
+Run on (8 X 4000 MHz CPU s)
+2019-02-10 19:24:17
+***WARNING*** CPU scaling is enabled, the benchmark real time measurements may be noisy and will incur extra overhead.
+***WARNING*** Library was built as DEBUG. Timings may be affected.
+Allocating and reading 160000000 bytes from '40M_32bit_keys.dat'.
+----------------------------------------------------------------------------
+Benchmark                          Time           CPU Iterations    KeyRate
+----------------------------------------------------------------------------
+[0;32mFSu32/radix_sort/1        [m[0;33m         0 ns          0 ns [m[0;36m1000000000[m 2.92522G/s[m   10.8973GB/s[m
+[m[0;32mFSu32/radix_sort/10       [m[0;33m       136 ns        136 ns [m[0;36m   5162624[m 73.5157M/s[m    280.44MB/s[m
+[m[0;32mFSu32/radix_sort/100      [m[0;33m       262 ns        261 ns [m[0;36m   2621831[m 382.438M/s[m   1.42469GB/s[m
+[m[0;32mFSu32/radix_sort/1000     [m[0;33m      1609 ns       1609 ns [m[0;36m    430896[m   621.6M/s[m   2.31564GB/s[m
+[m[0;32mFSu32/radix_sort/10000    [m[0;33m     14597 ns      14596 ns [m[0;36m     47954[m 685.097M/s[m   2.55219GB/s[m
+[m[0;32mFSu32/radix_sort/100000   [m[0;33m    145986 ns     145568 ns [m[0;36m      4822[m 686.965M/s[m   2.55915GB/s[m
+[m[0;32mFSu32/radix_sort/1000000  [m[0;33m   1489664 ns    1485220 ns [m[0;36m       463[m 673.301M/s[m   2.50824GB/s[m
+[m[0;32mFSu32/radix_sort/10000000 [m[0;33m  16746362 ns   16686821 ns [m[0;36m        34[m 599.275M/s[m   2.23247GB/s[m
+[m[0;32mFSu32/radix_sort/40000000 [m[0;33m  99269753 ns   98926161 ns [m[0;36m         6[m 404.342M/s[m   1.50629GB/s[m
+[m[0;32mFSu32/StdSort/1           [m[0;33m         3 ns          3 ns [m[0;36m 247338476[m 360.469M/s[m   1.34285GB/s[m
+[m[0;32mFSu32/StdSort/10          [m[0;33m         9 ns          9 ns [m[0;36m  74343123[m 1073.14M/s[m   3.99776GB/s[m
+[m[0;32mFSu32/StdSort/100         [m[0;33m       328 ns        328 ns [m[0;36m   2146384[m 304.556M/s[m   1.13456GB/s[m
+[m[0;32mFSu32/StdSort/1000        [m[0;33m      5329 ns       5328 ns [m[0;36m    132284[m 187.673M/s[m   715.917MB/s[m
+[m[0;32mFSu32/StdSort/10000       [m[0;33m     76994 ns      76990 ns [m[0;36m      9040[m 129.886M/s[m   495.477MB/s[m
+[m[0;32mFSu32/StdSort/100000      [m[0;33m    910470 ns     910427 ns [m[0;36m       741[m 109.839M/s[m   419.001MB/s[m
+[m[0;32mFSu32/StdSort/1000000     [m[0;33m  11231842 ns   11231308 ns [m[0;36m        49[m 89.0368M/s[m   339.649MB/s[m
+[m[0;32mFSu32/StdSort/10000000    [m[0;33m 681007717 ns  680981689 ns [m[0;36m         1[m 14.6847M/s[m   56.0176MB/s[m
+[m[0;32mFSu32/StdSort/40000000    [m[0;33m2930009236 ns 2929858438 ns [m[0;36m         1[m 13.6525M/s[m   52.0803MB/s[m
+[m[0;32mFSu32/QSort/1             [m[0;33m         8 ns          8 ns [m[0;36m  90821020[m 129.528M/s[m    494.11MB/s[m
+[m[0;32mFSu32/QSort/10            [m[0;33m        92 ns         92 ns [m[0;36m   7606481[m 108.608M/s[m   414.306MB/s[m
+[m[0;32mFSu32/QSort/100           [m[0;33m      1335 ns       1335 ns [m[0;36m    524865[m 74.9033M/s[m   285.733MB/s[m
+[m[0;32mFSu32/QSort/1000          [m[0;33m     17917 ns      17917 ns [m[0;36m     38884[m  55.814M/s[m   212.913MB/s[m
+[m[0;32mFSu32/QSort/10000         [m[0;33m    215251 ns     215234 ns [m[0;36m      3250[m 46.4611M/s[m   177.235MB/s[m
+[m[0;32mFSu32/QSort/100000        [m[0;33m   2579828 ns    2579707 ns [m[0;36m       267[m 38.7641M/s[m   147.873MB/s[m
+[m[0;32mFSu32/QSort/1000000       [m[0;33m  34427474 ns   34425725 ns [m[0;36m        17[m  29.048M/s[m   110.809MB/s[m
+[m[0;32mFSu32/QSort/10000000      [m[0;33m1209583298 ns 1209524335 ns [m[0;36m         1[m 8.26771M/s[m   31.5388MB/s[m
+[m[0;32mFSu32/QSort/40000000      [m[0;33m5275174470 ns 5274900300 ns [m[0;36m         1[m 7.58308M/s[m   28.9272MB/s[m
+[m
