@@ -842,6 +842,9 @@ static void bitmap_sort_16(uint16_t *arr, uint64_t *bitmap, size_t n)
 Since we're using a single bit per value we have extend the magnitude of keys we can handle
 per unit memory by a factor of 32 or 64. We can now go up to 24-bit keys in only 2MiB memory.
 
+Jon Bentley originally presented a scenario where this approach could be useful in his book [Programming Pearls, 2nd ed](https://archive.org/details/ProgrammingPearls2ndEditionJonBentley/page/n229),
+section 1.2, and his Dr.Dobb's column [Algorithm Alley](http://www.drdobbs.com/architecture-and-design/algorithm-alley/184411142?pgno=1).
+
 ## <a name="todo"></a> TODO
 
 + Point out places where endianess could matter (i.e float conversion)
