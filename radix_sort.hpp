@@ -32,23 +32,28 @@ insert_sort(T *arr, size_t n) {
 
 template <typename T, typename KeyType = uint32_t, typename SizeType = size_t, typename KeyFunc>
 static T* radix_sort_internal_8(T * RESTRICT src, T * RESTRICT aux, SizeType * RESTRICT hist, size_t n, KeyFunc && kf) {
-	constexpr unsigned int wc = sizeof(KeyType);
-	constexpr unsigned int hist_len = 256;
+	constexpr unsigned int hist_shift = 8;
+	constexpr unsigned int hist_len = 1L << hist_shift;
+	constexpr unsigned int hist_mask = hist_len - 1;
+	constexpr unsigned int wc = sizeof(KeyType); // * 8 / hist_shift;
+	// Probably not worth it:
+	constexpr static const unsigned int shift_table[] = { 0, hist_shift, 2*hist_shift, 3*hist_shift, 4*hist_shift, 5*hist_shift, 6*hist_shift, 7*hist_shift };
 	int cols[wc];
+	int ncols = 0;
+	KeyType key0;
 
 	memset(hist, 0, hist_len * wc * sizeof(*hist));
 
-	size_t n_unsorted = n;
-
 	// Histograms
+	size_t n_unsorted = n;
 	for (size_t i = 0 ; i < n ; ++i) {
 		// pre-sorted detection
-		KeyType keyi = kf(src[i]);
-		if ((i < n - 1) && (keyi <= kf(src[i+1]))) {
+		key0 = kf(src[i]);
+		if ((i < n - 1) && (key0 <= kf(src[i+1]))) {
 			--n_unsorted;
 		}
 		for (unsigned int j = 0 ; j < wc ; ++j) {
-			++hist[(256*j) + ((keyi >> (j << 3)) & 0xFF)];
+			++hist[(hist_len*j) + ((key0 >> shift_table[j]) & hist_mask)];
 		}
 	}
 
@@ -57,10 +62,9 @@ static T* radix_sort_internal_8(T * RESTRICT src, T * RESTRICT aux, SizeType * R
 	}
 
 	// Sample first key to determine if any columns can be skipped
-	int ncols = 0;
-	KeyType key0 = kf(*src);
+	key0 = kf(*src);
 	for (unsigned int i = 0 ; i < wc ; ++i) {
-		if (hist[(256*i) + ((key0 >> (i << 3)) & 0xFF)] != n) {
+		if (hist[(hist_len*i) + ((key0 >> shift_table[i]) & hist_mask)] != n) {
 			cols[ncols++] = i;
 		}
 	}
@@ -69,8 +73,8 @@ static T* radix_sort_internal_8(T * RESTRICT src, T * RESTRICT aux, SizeType * R
 	for (int i = 0 ; i < ncols ; ++i) {
 		SizeType a = 0;
 		for (unsigned int j = 0 ; j < hist_len ; ++j) {
-			SizeType b = hist[(256*cols[i]) + j];
-			hist[(256*cols[i]) + j] = a;
+			SizeType b = hist[(hist_len*cols[i]) + j];
+			hist[(hist_len*cols[i]) + j] = a;
 			a += b;
 		}
 	}
@@ -79,7 +83,71 @@ static T* radix_sort_internal_8(T * RESTRICT src, T * RESTRICT aux, SizeType * R
 	for (int i = 0 ; i < ncols ; ++i) {
 		for (size_t j = 0 ; j < n ; ++j) {
 			T k = src[j];
-			SizeType dst = hist[(256*cols[i]) + ((kf(k) >> (cols[i] << 3)) & 0xFF)]++;
+			SizeType dst = hist[(hist_len*cols[i]) + ((kf(k) >> shift_table[cols[i]]) & hist_mask)]++;
+			aux[dst] = k;
+		}
+		std::swap(src, aux);
+	}
+
+	// This can be either src or aux buffer, depending on odd/even number of columns sorted.
+	return src;
+}
+
+template <typename T, typename KeyType = uint32_t, typename SizeType = size_t, typename KeyFunc>
+static T* radix_sort_internal_11(T * RESTRICT src, T * RESTRICT aux, SizeType * RESTRICT hist, size_t n, KeyFunc && kf) {
+	constexpr unsigned int hist_shift = 11;
+	constexpr unsigned int hist_len = 1L << hist_shift;
+	constexpr unsigned int hist_mask = hist_len - 1;
+	// Number of columns needed to cover 64, 32 and 16 bit wide types:
+	constexpr unsigned int wc = sizeof(KeyType) == 8 ? 6 : sizeof(KeyType) == 4 ? 3 : sizeof(KeyType) == 2 ? 2 : 1;
+	constexpr static const unsigned int shift_table[] = { 0, hist_shift, 2*hist_shift, 3*hist_shift, 4*hist_shift, 5*hist_shift, 6*hist_shift, 7*hist_shift };
+	int cols[wc];
+	int ncols = 0;
+	KeyType key0;
+
+	memset(hist, 0, hist_len * wc * sizeof(*hist));
+
+	// Histograms
+	size_t n_unsorted = n;
+	for (size_t i = 0 ; i < n ; ++i) {
+		// pre-sorted detection
+		key0 = kf(src[i]);
+		if ((i < n - 1) && (key0 <= kf(src[i+1]))) {
+			--n_unsorted;
+		}
+		for (unsigned int j = 0 ; j < wc ; ++j) {
+			++hist[(hist_len*j) + ((key0 >> shift_table[j]) & hist_mask)];
+		}
+	}
+
+	if (n_unsorted < 2) {
+		return src;
+	}
+
+	// Sample first key to determine if any columns can be skipped
+	key0 = kf(*src);
+	for (unsigned int i = 0 ; i < wc ; ++i) {
+		if (hist[(hist_len*i) + ((key0 >> shift_table[i]) & hist_mask)] != n) {
+			cols[ncols++] = i;
+		}
+	}
+
+	// Calculate offsets (exclusive scan)
+	for (int i = 0 ; i < ncols ; ++i) {
+		SizeType a = 0;
+		for (unsigned int j = 0 ; j < hist_len ; ++j) {
+			SizeType b = hist[(hist_len*cols[i]) + j];
+			hist[(hist_len*cols[i]) + j] = a;
+			a += b;
+		}
+	}
+
+	// Sort
+	for (int i = 0 ; i < ncols ; ++i) {
+		printf("Sorting column %d\n", cols[i]);
+		for (size_t j = 0 ; j < n ; ++j) {
+			T k = src[j];
+			SizeType dst = hist[(hist_len*cols[i]) + ((kf(k) >> shift_table[cols[i]]) & hist_mask)]++;
 			aux[dst] = k;
 		}
 		std::swap(src, aux);
@@ -95,7 +163,7 @@ template<typename ArrayType>
 ArrayType* radix_sort(ArrayType * RESTRICT src, ArrayType * RESTRICT aux, size_t n, bool asc) {
 	if (n < 2)
 		return src;
-	size_t hist[256*sizeof(*src)];
+	size_t hist[(1L << 8)* sizeof(*src)];
 	if (asc) {
 		return radix_sort_internal_8<ArrayType,ArrayType>(src, aux, hist, n, [](const ArrayType& entry) KEYFN_ATTR {
 			return entry;
@@ -110,7 +178,7 @@ ArrayType* radix_sort(ArrayType * RESTRICT src, ArrayType * RESTRICT aux, size_t
 int32_t* radix_sort(int32_t * RESTRICT src, int32_t * RESTRICT aux, size_t n, bool asc) {
 	if (n < 2)
 		return src;
-	size_t hist[256*sizeof(*src)];
+	size_t hist[(1L << 8)*sizeof(*src)];
 	if (asc) {
 		return radix_sort_internal_8<int32_t>(src, aux, hist, n, [](const int32_t& entry) KEYFN_ATTR {
 			return entry ^ (1L << 31);
@@ -125,7 +193,7 @@ int32_t* radix_sort(int32_t * RESTRICT src, int32_t * RESTRICT aux, size_t n, bo
 float* radix_sort(float * RESTRICT src, float * RESTRICT aux, size_t n, bool asc) {
 	if (n < 2)
 		return src;
-	size_t hist[256*sizeof(*src)];
+	size_t hist[(1L << 8)*sizeof(*src)];
 	if (asc) {
 		return radix_sort_internal_8<float,uint32_t>(src, aux, hist, n, [](const float &entry) KEYFN_ATTR {
 			uint32_t local; // = *reinterpret_cast<const uint32_t*>(&entry);
