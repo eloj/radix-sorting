@@ -173,7 +173,7 @@ int test_radix_sort(const char *filename, size_t entries, int use_mmap, int use_
 
 	printf("Sorting %zu integers...\n", n);
 	clock_gettime(CLOCK_MONOTONIC_RAW, &tp_start);
-	auto *sorted = radix_sort(src, aux, n, true);
+	auto *sorted = radix_sort(src, aux, n);
 	clock_gettime(CLOCK_MONOTONIC_RAW, &tp_end);
 
 #ifdef VERIFY_SORT

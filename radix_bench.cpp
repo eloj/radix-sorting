@@ -85,7 +85,7 @@ BENCHMARK_DEFINE_F(FSu32, radix_sort)(benchmark::State &state) {
 	if (n > max_n)
 		state.SkipWithError("Not enough source data to benchmark!");
 	for (auto _ : state) {
-		auto *sorted = radix_sort(src, aux, n, true);
+		auto *sorted = radix_sort(src, aux, n);
 	}
 	UpdateCounters(state);
 }

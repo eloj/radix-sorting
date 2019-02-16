@@ -160,51 +160,31 @@ static T* radix_sort_internal_11(T * RESTRICT src, T * RESTRICT aux, SizeType * 
 // Common code for the unsigned integers. A bit dangerous,
 // never use a type that hasn't been overridden below.
 template<typename ArrayType>
-ArrayType* radix_sort(ArrayType * RESTRICT src, ArrayType * RESTRICT aux, size_t n, bool asc) {
+ArrayType* radix_sort(ArrayType * RESTRICT src, ArrayType * RESTRICT aux, size_t n) {
 	if (n < 2)
 		return src;
 	size_t hist[(1L << 8)* sizeof(*src)];
-	if (asc) {
-		return radix_sort_internal_8<ArrayType,ArrayType>(src, aux, hist, n, [](const ArrayType& entry) KEYFN_ATTR {
-			return entry;
-		});
-	} else {
-		return radix_sort_internal_8<ArrayType,ArrayType>(src, aux, hist, n, [](const ArrayType& entry) KEYFN_ATTR {
-			return ~entry;
-		});
-	}
+	return radix_sort_internal_8<ArrayType,ArrayType>(src, aux, hist, n, [](const ArrayType& entry) KEYFN_ATTR {
+		return entry;
+	});
 }
 
-int32_t* radix_sort(int32_t * RESTRICT src, int32_t * RESTRICT aux, size_t n, bool asc) {
+int32_t* radix_sort(int32_t * RESTRICT src, int32_t * RESTRICT aux, size_t n) {
 	if (n < 2)
 		return src;
 	size_t hist[(1L << 8)*sizeof(*src)];
-	if (asc) {
-		return radix_sort_internal_8<int32_t>(src, aux, hist, n, [](const int32_t& entry) KEYFN_ATTR {
-			return entry ^ (1L << 31);
-		});
-	} else {
-		return radix_sort_internal_8<int32_t>(src, aux, hist, n, [](const int32_t& entry) KEYFN_ATTR {
-			return ~(entry ^ (1L << 31));
-		});
-	}
+	return radix_sort_internal_8<int32_t>(src, aux, hist, n, [](const int32_t& entry) KEYFN_ATTR {
+		return entry ^ (1L << 31);
+	});
 }
 
-float* radix_sort(float * RESTRICT src, float * RESTRICT aux, size_t n, bool asc) {
+float* radix_sort(float * RESTRICT src, float * RESTRICT aux, size_t n) {
 	if (n < 2)
 		return src;
 	size_t hist[(1L << 8)*sizeof(*src)];
-	if (asc) {
-		return radix_sort_internal_8<float,uint32_t>(src, aux, hist, n, [](const float &entry) KEYFN_ATTR {
-			uint32_t local; // = *reinterpret_cast<const uint32_t*>(&entry);
-			memcpy(&local, &entry, sizeof(local));
-			return (local ^ (-(local >> 31) | (1L << 31)));
-		});
-	} else {
-		return radix_sort_internal_8<float,uint32_t>(src, aux, hist, n, [](const float &entry) KEYFN_ATTR {
-			uint32_t local; // = *reinterpret_cast<const uint32_t*>(&entry);
-			memcpy(&local, &entry, sizeof(local));
-			return ~(local ^ (-(local >> 31) | (1L << 31)));
-		});
-	}
+	return radix_sort_internal_8<float,uint32_t>(src, aux, hist, n, [](const float &entry) KEYFN_ATTR {
+		uint32_t local; // = *reinterpret_cast<const uint32_t*>(&entry);
+		memcpy(&local, &entry, sizeof(local));
+		return (local ^ (-(local >> 31) | (1L << 31)));
+	});
 }
