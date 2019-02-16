@@ -1,11 +1,11 @@
 /*
 	Basic test program for running experiments.
 
-	$ ./radix <entries> <use_mmap> <use_huge> <hex-mask>
+	$ ./radix <entries> [<use_mmap> <use_huge> <type> <hex-mask>]
 
 	Example:
 
-	$ ./radix 0 1 0 0x00FFFFFF
+	$ ./radix 0 1 0 uint32_t 0x00FFFFFF
 
 	Note: Will not compile on WIN32 in current state.
 */
@@ -107,13 +107,16 @@ static void* read_file(const char *filename, size_t *limit, int use_mmap, int us
 template <typename T>
 void print_sort(T *keys, size_t offset, size_t n) {
 	for (size_t i = offset ; i < offset + n ; ++i) {
+		// NOTE: Hackety-hack.
 		if constexpr(sizeof(T) > 4) {
 			printf("%08zu: %016" PRIx64, i, (uint64_t)keys[i]);
-		} else {
+		} else if constexpr(sizeof(T) > 2) {
 			printf("%08zu: %08" PRIx32, i, (uint32_t)keys[i]);
+		} else if constexpr(sizeof(T) == 2) {
+			printf("%08zu: %04" PRIx16, i, (uint16_t)keys[i]);
+		} else {
+			printf("%08zu: %02" PRIx8, i, (uint8_t)keys[i]);
 		}
-		// printf(" int:%d", (int32_t)keys[i]);
-		// printf(" float:%f ", *(reinterpret_cast<float*>(keys + i)));
 		printf("\n");
 	}
 }
@@ -211,10 +214,14 @@ int main(int argc, char *argv[])
 	int entries = argc > 1 ? atoi(argv[1]) : 0;
 	int use_mmap = argc > 2 ? atoi(argv[2]) : 0;
 	int use_huge = argc > 3 ? atoi(argv[3]) : 0;
-	uint64_t value_mask = argc > 4 ? strtoull(argv[4], NULL, 16) : -1;
+	const char *ktype = argc > 4 ? argv[4] : "uint32_t";
+	uint64_t value_mask = argc > 5 ? strtoull(argv[5], NULL, 16) : -1;
+
+	// TODO: have some floating point test data.
+	// float f[] = { 128.0f, 646464.0f, 0.0f, -0.0f, -0.5f, 0.5f, -128.0f, -INFINITY, NAN, INFINITY};
 
 	if (argc == 1) {
-		printf("Usage: %s <count> [<use_mmap> <use_huge> <hex-mask>]\n", argv[0]);
+		printf("Usage: %s <count> [<use_mmap> <use_huge> <uint8_t|uint16_t|uint32_t|uint64_t|int32_t|float> <hex-mask>]\n", argv[0]);
 		exit(0);
 	}
 
@@ -223,9 +230,24 @@ int main(int argc, char *argv[])
 	if (use_huge)
 		RADIX_MMAP_FLAGS |= MAP_HUGETLB;
 
-	printf("src='%s', entries=%d, use_mmap=%d, use_huge=%d, mask=0x%08lx \n", src_fn, entries, use_mmap, use_huge, value_mask);
+	printf("src='%s', entries=%d, use_mmap=%d, use_huge=%d, type='%s', mask=0x%08lx \n", src_fn, entries, use_mmap, use_huge, ktype, value_mask);
 
-	int res = test_radix_sort<uint32_t>(src_fn, entries, use_mmap, use_huge, value_mask);
+	int res = 100;
+	if (strcmp(ktype, "uint8_t") == 0) {
+		res = test_radix_sort<uint8_t>(src_fn, entries, use_mmap, use_huge, value_mask);
+	} else if (strcmp(ktype, "uint16_t") == 0) {
+		res = test_radix_sort<uint16_t>(src_fn, entries, use_mmap, use_huge, value_mask);
+	} else if (strcmp(ktype, "uint32_t") == 0) {
+		res = test_radix_sort<uint32_t>(src_fn, entries, use_mmap, use_huge, value_mask);
+	} else if (strcmp(ktype, "uint64_t") == 0) {
+		res = test_radix_sort<uint64_t>(src_fn, entries, use_mmap, use_huge, value_mask);
+	} else if (strcmp(ktype, "int32_t") == 0) {
+		res = test_radix_sort<int32_t>(src_fn, entries, use_mmap, use_huge, value_mask);
+	} else if (strcmp(ktype, "float") == 0) {
+		res = test_radix_sort<float>(src_fn, entries, use_mmap, use_huge, value_mask);
+	} else {
+		printf("Error: unknown key type, '%s'.\n", ktype);
+	}
 
 	return res;
 }
