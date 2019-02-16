@@ -35,8 +35,7 @@ static T* radix_sort_internal(T * RESTRICT src, T * RESTRICT aux, SizeType * RES
 	constexpr unsigned int hist_len = 256;
 	int cols[wc];
 
-	// Assume memory already zeroed!
-	// memset(hist, 0, hist_len * wc * sizeof(*hist));
+	memset(hist, 0, hist_len * wc * sizeof(*hist));
 
 	size_t n_unsorted = n;
 
@@ -92,7 +91,7 @@ static T* radix_sort_internal(T * RESTRICT src, T * RESTRICT aux, SizeType * RES
 uint64_t* radix_sort(uint64_t * RESTRICT src, uint64_t * RESTRICT aux, size_t n, bool asc) {
 	if (n < 2)
 		return src;
-	size_t hist[256*sizeof(*src)] = { 0 };
+	size_t hist[256*sizeof(*src)];
 	if (asc) {
 		return radix_sort_internal<uint64_t,uint64_t>(src, aux, hist, n, [](const uint64_t& entry) KEYFN_ATTR {
 			return entry;
@@ -107,7 +106,7 @@ uint64_t* radix_sort(uint64_t * RESTRICT src, uint64_t * RESTRICT aux, size_t n,
 uint32_t* radix_sort(uint32_t * RESTRICT src, uint32_t * RESTRICT aux, size_t n, bool asc) {
 	if (n < 2)
 		return src;
-	size_t hist[256*sizeof(*src)] = { 0 };
+	size_t hist[256*sizeof(*src)];
 	if (asc) {
 		return radix_sort_internal<uint32_t,uint32_t,size_t>(src, aux, hist, n, [](const uint32_t& entry) KEYFN_ATTR {
 			return entry;
@@ -122,7 +121,7 @@ uint32_t* radix_sort(uint32_t * RESTRICT src, uint32_t * RESTRICT aux, size_t n,
 uint16_t* radix_sort(uint16_t * RESTRICT src, uint16_t * RESTRICT aux, size_t n, bool asc) {
 	if (n < 2)
 		return src;
-	size_t hist[256*sizeof(*src)] = { 0 };
+	size_t hist[256*sizeof(*src)];
 	if (asc) {
 		return radix_sort_internal<uint16_t,uint16_t>(src, aux, hist, n, [](const uint16_t& entry) KEYFN_ATTR {
 			return entry;
@@ -137,7 +136,7 @@ uint16_t* radix_sort(uint16_t * RESTRICT src, uint16_t * RESTRICT aux, size_t n,
 int32_t* radix_sort(int32_t * RESTRICT src, int32_t * RESTRICT aux, size_t n, bool asc) {
 	if (n < 2)
 		return src;
-	size_t hist[256*sizeof(*src)] = { 0 };
+	size_t hist[256*sizeof(*src)];
 	if (asc) {
 		return radix_sort_internal<int32_t>(src, aux, hist, n, [](const int32_t& entry) KEYFN_ATTR {
 			return entry ^ (1L << 31);
@@ -152,7 +151,7 @@ int32_t* radix_sort(int32_t * RESTRICT src, int32_t * RESTRICT aux, size_t n, bo
 float* radix_sort(float * RESTRICT src, float * RESTRICT aux, size_t n, bool asc) {
 	if (n < 2)
 		return src;
-	size_t hist[256*sizeof(*src)] = { 0 };
+	size_t hist[256*sizeof(*src)];
 	if (asc) {
 		return radix_sort_internal<float,uint32_t>(src, aux, hist, n, [](const float &entry) KEYFN_ATTR {
 			uint32_t local; // = *reinterpret_cast<const uint32_t*>(&entry);
