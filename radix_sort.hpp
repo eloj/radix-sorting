@@ -42,6 +42,7 @@ static T* radix_sort_internal_8(T * RESTRICT src, T * RESTRICT aux, SizeType * R
 	int ncols = 0;
 	KeyType key0;
 
+	// printf("histogram size = %d * %d * %zu = %zu bytes\n", hist_len, wc, sizeof(*hist), hist_len * wc * sizeof(*hist));
 	memset(hist, 0, hist_len * wc * sizeof(*hist));
 
 	// Histograms
@@ -157,16 +158,31 @@ static T* radix_sort_internal_11(T * RESTRICT src, T * RESTRICT aux, SizeType * 
 	return src;
 }
 
+template<typename SizeType, typename ArrayType, typename KeyFunc>
+ArrayType* radix_sort_stackhist(ArrayType * RESTRICT src, ArrayType * RESTRICT aux, size_t n, KeyFunc && kf) {
+	SizeType hist[(1L << 8)*sizeof(*src)];
+	return radix_sort_internal_8<ArrayType,ArrayType,SizeType>(src, aux, hist, n, kf);
+}
+
 // Common code for the unsigned integers. A bit dangerous,
 // never use a type that hasn't been overridden below.
 template<typename ArrayType>
 ArrayType* radix_sort(ArrayType * RESTRICT src, ArrayType * RESTRICT aux, size_t n) {
 	if (n < 2)
 		return src;
-	size_t hist[(1L << 8)* sizeof(*src)];
-	return radix_sort_internal_8<ArrayType,ArrayType>(src, aux, hist, n, [](const ArrayType& entry) KEYFN_ATTR {
-		return entry;
-	});
+	if (n < (1LL << 16)) {
+		return radix_sort_stackhist<uint16_t>(src, aux, n, [](const ArrayType& entry) KEYFN_ATTR {
+			return entry;
+		});
+	} else if (n < (1LL << 32)) {
+		return radix_sort_stackhist<uint32_t>(src, aux, n, [](const ArrayType& entry) KEYFN_ATTR {
+			return entry;
+		});
+	} else {
+		return radix_sort_stackhist<size_t>(src, aux, n, [](const ArrayType& entry) KEYFN_ATTR {
+			return entry;
+		});
+	}
 }
 
 int32_t* radix_sort(int32_t * RESTRICT src, int32_t * RESTRICT aux, size_t n) {
