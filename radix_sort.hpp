@@ -43,7 +43,7 @@ static T* radix_sort_internal_8(T * RESTRICT src, T * RESTRICT aux, SizeType * R
 	KeyType key0;
 
 	// printf("histogram size = %d * %d * %zu = %zu bytes\n", hist_len, wc, sizeof(*hist), hist_len * wc * sizeof(*hist));
-	memset(hist, 0, hist_len * wc * sizeof(*hist));
+	// memset(hist, 0, hist_len * wc * sizeof(*hist));
 
 	// Histograms
 	size_t n_unsorted = n;
@@ -160,7 +160,7 @@ static T* radix_sort_internal_11(T * RESTRICT src, T * RESTRICT aux, SizeType * 
 
 template<typename SizeType, typename ArrayType, typename KeyFunc>
 ArrayType* radix_sort_stackhist(ArrayType * RESTRICT src, ArrayType * RESTRICT aux, size_t n, KeyFunc && kf) {
-	SizeType hist[(1L << 8)*sizeof(*src)];
+	SizeType hist[(1L << 8)*sizeof(*src)] = { 0 };
 	return radix_sort_internal_8<ArrayType,ArrayType,SizeType>(src, aux, hist, n, kf);
 }
 
@@ -168,18 +168,20 @@ ArrayType* radix_sort_stackhist(ArrayType * RESTRICT src, ArrayType * RESTRICT a
 // never use a type that hasn't been overridden below.
 template<typename ArrayType>
 ArrayType* radix_sort(ArrayType * RESTRICT src, ArrayType * RESTRICT aux, size_t n) {
-	if (n < 2)
-		return src;
-	if (n < (1LL << 16)) {
-		return radix_sort_stackhist<uint16_t>(src, aux, n, [](const ArrayType& entry) KEYFN_ATTR {
-			return entry;
-		});
-	} else if (n < (1LL << 32)) {
-		return radix_sort_stackhist<uint32_t>(src, aux, n, [](const ArrayType& entry) KEYFN_ATTR {
-			return entry;
-		});
+	if (n >= (1LL << 16)) {
+		if (n < (1LL << 32)) {
+			return radix_sort_stackhist<uint32_t>(src, aux, n, [](const ArrayType& entry) KEYFN_ATTR {
+				return entry;
+			});
+		} else {
+			return radix_sort_stackhist<size_t>(src, aux, n, [](const ArrayType& entry) KEYFN_ATTR {
+				return entry;
+			});
+		}
 	} else {
-		return radix_sort_stackhist<size_t>(src, aux, n, [](const ArrayType& entry) KEYFN_ATTR {
+		if (n < 2)
+			return src;
+		return radix_sort_stackhist<uint16_t>(src, aux, n, [](const ArrayType& entry) KEYFN_ATTR {
 			return entry;
 		});
 	}
@@ -188,7 +190,7 @@ ArrayType* radix_sort(ArrayType * RESTRICT src, ArrayType * RESTRICT aux, size_t
 int32_t* radix_sort(int32_t * RESTRICT src, int32_t * RESTRICT aux, size_t n) {
 	if (n < 2)
 		return src;
-	size_t hist[(1L << 8)*sizeof(*src)];
+	size_t hist[(1L << 8)*sizeof(*src)] = { 0 };
 	return radix_sort_internal_8<int32_t>(src, aux, hist, n, [](const int32_t& entry) KEYFN_ATTR {
 		return entry ^ (1L << 31);
 	});
@@ -197,7 +199,7 @@ int32_t* radix_sort(int32_t * RESTRICT src, int32_t * RESTRICT aux, size_t n) {
 float* radix_sort(float * RESTRICT src, float * RESTRICT aux, size_t n) {
 	if (n < 2)
 		return src;
-	size_t hist[(1L << 8)*sizeof(*src)];
+	size_t hist[(1L << 8)*sizeof(*src)] = { 0 };
 	return radix_sort_internal_8<float,uint32_t>(src, aux, hist, n, [](const float &entry) KEYFN_ATTR {
 		uint32_t local; // = *reinterpret_cast<const uint32_t*>(&entry);
 		memcpy(&local, &entry, sizeof(local));
