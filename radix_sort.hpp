@@ -12,7 +12,6 @@
 */
 
 #define RESTRICT __restrict__
-#define KEYFN_ATTR __attribute__((pure, hot))
 
 /*
 	'isort3'; J.L Bentley, "Programming Pearls", column 11.1, page 116.
@@ -170,18 +169,18 @@ template<typename ArrayType>
 ArrayType* radix_sort(ArrayType * RESTRICT src, ArrayType * RESTRICT aux, size_t n) {
 	if (n >= (1LL << 16)) {
 		if (n < (1LL << 32)) {
-			return radix_sort_stackhist<uint32_t>(src, aux, n, [](const ArrayType& entry) KEYFN_ATTR {
+			return radix_sort_stackhist<uint32_t>(src, aux, n, [](const ArrayType& entry) {
 				return entry;
 			});
 		} else {
-			return radix_sort_stackhist<size_t>(src, aux, n, [](const ArrayType& entry) KEYFN_ATTR {
+			return radix_sort_stackhist<size_t>(src, aux, n, [](const ArrayType& entry) {
 				return entry;
 			});
 		}
 	} else {
 		if (n < 2)
 			return src;
-		return radix_sort_stackhist<uint16_t>(src, aux, n, [](const ArrayType& entry) KEYFN_ATTR {
+		return radix_sort_stackhist<uint16_t>(src, aux, n, [](const ArrayType& entry) {
 			return entry;
 		});
 	}
@@ -191,7 +190,7 @@ int32_t* radix_sort(int32_t * RESTRICT src, int32_t * RESTRICT aux, size_t n) {
 	if (n < 2)
 		return src;
 	size_t hist[(1L << 8)*sizeof(*src)] = { 0 };
-	return radix_sort_internal_8<int32_t>(src, aux, hist, n, [](const int32_t& entry) KEYFN_ATTR {
+	return radix_sort_internal_8<int32_t>(src, aux, hist, n, [](const int32_t& entry) {
 		return entry ^ (1L << 31);
 	});
 }
@@ -200,7 +199,7 @@ float* radix_sort(float * RESTRICT src, float * RESTRICT aux, size_t n) {
 	if (n < 2)
 		return src;
 	size_t hist[(1L << 8)*sizeof(*src)] = { 0 };
-	return radix_sort_internal_8<float,uint32_t>(src, aux, hist, n, [](const float &entry) KEYFN_ATTR {
+	return radix_sort_internal_8<float,uint32_t>(src, aux, hist, n, [](const float &entry) {
 		uint32_t local; // = *reinterpret_cast<const uint32_t*>(&entry);
 		memcpy(&local, &entry, sizeof(local));
 		return (local ^ (-(local >> 31) | (1L << 31)));
