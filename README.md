@@ -114,6 +114,8 @@ of this counting sort become fairly obvious; you need a location to store the co
 integer. For 8- and 16-bit numbers this would amount to `2^8*4`=1KiB and `2^16*4`=256KiB of memory. For
 32-bit integers, it'd require `2^32*4`=16GiB of memory. Multiply by two if you need 64- instead of 32-bit counters.
 
+Again, we're only sorting an array of integers, nothing more.
+
 As the wikipedia page explains, it's really the magnitude of the keys involved that matters. Some
 implementations can be seen scanning the input data to determine and allocate just enough entries to fit
 either `max(key) + 1`, or tighter, `max(key) - min(key) + 1` keys. However, unless you do this because you
@@ -175,16 +177,20 @@ array is required; the algorithm would break if we tried to write directly into 
 
 However, the _main_ difference between this and the first variant is that we're no longer directly writing the
 output from the counts. Instead the counts are re-processed into a [prefix sum](https://en.wikipedia.org/wiki/Prefix_sum)
-(or _exclusive scan_) in the second loop. This gives us, for each input value, its first location in the sorted output array, i.e
-the value of `cnt[j]` tells us the array index at which to write the first _j_ to the output.
+(or _exclusive scan_) in the second loop.
+
+This gives us, for each input value, its first location in the sorted output array, i.e
+the value of `cnt[j]` tells us the array index at which to write the first _j_ to the output, because `cnt[j]`
+contains the <em>sum count</em> of all elements that would precede ('sort lower than') _j_.
 
 For instance, `cnt[0]` will always be zero, because any `0` will always end up in the first
-position in the output. `cnt[1]` will contain how many zeroes precede the first `1`, `cnt[2]` will
-contain how many zeroes _and_ ones precede the first `2`, and so on.
+position in the output (we're assuming only positiv integers for now). `cnt[1]` will contain
+how many zeroes precede the first `1`, `cnt[2]` will contain how many zeroes _and_ ones precede
+the first `2`, and so on.
 
-In the sorting loop, we look up the output location for the key of the current entry, and write the
-entry there. We then increase the count of the prefix sum by one, which guarantees that the next same-keyed entry
-is written just after this one.
+In the sorting loop, we look up the output location for the key of the entry we're sorting, and write the
+entry there. We then increase the count of the prefix sum for that key by one, which guarantees that
+the next same-keyed entry is written just after.
 
 Because we are processing the input entries in order, from the lowest to the highest index, and preserving
 this order when we write them out, this sort is in essence _stable_. That said, it's a bit of a pointless distinction
@@ -226,7 +232,7 @@ static void counting_sort_rec_sk(struct sortrec *arr, struct sortrec *aux, size_
 ```
 
 We are now sorting an array of `struct sortrec`, not an array of octets. The name and the type of the struct
-here is arbitary; it's only used to show that we're not restricted to sorting _arrays of integers_.
+here is arbitrary; it's only used to show that we're not restricted to sorting _arrays of integers_.
 
 The primary modification to the sorting function is the small addition of a function `key_of()`, which returns
 the key for a given record.
@@ -275,9 +281,9 @@ Because working with individual bits is in some sense "slow", we group multiple 
 them together into units that are either faster and/or more convenient to work with.
 One such grouping is into strings of eight bits, called octets or [bytes](https://en.wikipedia.org/wiki/Byte).
 
-An octet, `2^8` bits, can represent `256` different values. In other words, just
+An octet can represent `2^8` or `256` different values. In other words, just
 as processing a base-10 number digit-by-digit is operating in radix-10, processing
-a binary number in chunks of eight bits means operating in radix-256.
+a binary number in units of eight bits means operating in radix-256.
 
 Since we're not going to do any math with the keys, it may help to conceptually
 consider them simply as _bit-strings_ instead of numbers. This gets rid of some
