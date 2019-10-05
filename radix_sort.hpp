@@ -30,7 +30,7 @@ insert_sort(T *arr, size_t n) {
 }
 
 template <typename T, typename KeyType = uint32_t, typename SizeType = size_t, typename KeyFunc>
-static T* radix_sort_internal_8(T * RESTRICT src, T * RESTRICT aux, SizeType * RESTRICT hist, size_t n, KeyFunc && kf) {
+static auto radix_sort_internal_8(T * RESTRICT src, T * RESTRICT aux, SizeType * RESTRICT hist, size_t n, KeyFunc && kf) -> T* {
 	constexpr unsigned int hist_shift = 8;
 	constexpr unsigned int hist_len = 1L << hist_shift;
 	constexpr unsigned int hist_mask = hist_len - 1;
@@ -94,7 +94,7 @@ static T* radix_sort_internal_8(T * RESTRICT src, T * RESTRICT aux, SizeType * R
 }
 
 template <typename T, typename KeyType = uint32_t, typename SizeType = size_t, typename KeyFunc>
-static T* radix_sort_internal_11(T * RESTRICT src, T * RESTRICT aux, SizeType * RESTRICT hist, size_t n, KeyFunc && kf) {
+static auto radix_sort_internal_11(T * RESTRICT src, T * RESTRICT aux, SizeType * RESTRICT hist, size_t n, KeyFunc && kf) -> T* {
 	constexpr unsigned int hist_shift = 11;
 	constexpr unsigned int hist_len = 1L << hist_shift;
 	constexpr unsigned int hist_mask = hist_len - 1;
@@ -158,7 +158,7 @@ static T* radix_sort_internal_11(T * RESTRICT src, T * RESTRICT aux, SizeType * 
 }
 
 template<typename SizeType, typename ArrayType, typename KeyFunc>
-ArrayType* radix_sort_stackhist(ArrayType * RESTRICT src, ArrayType * RESTRICT aux, size_t n, KeyFunc && kf) {
+auto radix_sort_stackhist(ArrayType * RESTRICT src, ArrayType * RESTRICT aux, size_t n, KeyFunc && kf) -> ArrayType* {
 	SizeType hist[(1L << 8)*sizeof(*src)] = { 0 };
 	return radix_sort_internal_8<ArrayType,ArrayType,SizeType>(src, aux, hist, n, kf);
 }
@@ -166,7 +166,7 @@ ArrayType* radix_sort_stackhist(ArrayType * RESTRICT src, ArrayType * RESTRICT a
 // Common code for the unsigned integers. A bit dangerous,
 // never use a type that hasn't been overridden below.
 template<typename ArrayType>
-ArrayType* radix_sort(ArrayType * RESTRICT src, ArrayType * RESTRICT aux, size_t n) {
+auto radix_sort(ArrayType * RESTRICT src, ArrayType * RESTRICT aux, size_t n) -> ArrayType* {
 	if (n >= (1LL << 16)) {
 		if (n < (1LL << 32)) {
 			return radix_sort_stackhist<uint32_t>(src, aux, n, [](const ArrayType& entry) {
@@ -186,7 +186,7 @@ ArrayType* radix_sort(ArrayType * RESTRICT src, ArrayType * RESTRICT aux, size_t
 	}
 }
 
-int32_t* radix_sort(int32_t * RESTRICT src, int32_t * RESTRICT aux, size_t n) {
+auto radix_sort(int32_t * RESTRICT src, int32_t * RESTRICT aux, size_t n) -> int32_t* {
 	if (n < 2)
 		return src;
 	size_t hist[(1L << 8)*sizeof(*src)] = { 0 };
@@ -195,7 +195,7 @@ int32_t* radix_sort(int32_t * RESTRICT src, int32_t * RESTRICT aux, size_t n) {
 	});
 }
 
-float* radix_sort(float * RESTRICT src, float * RESTRICT aux, size_t n) {
+auto radix_sort(float * RESTRICT src, float * RESTRICT aux, size_t n) -> float* {
 	if (n < 2)
 		return src;
 	size_t hist[(1L << 8)*sizeof(*src)] = { 0 };

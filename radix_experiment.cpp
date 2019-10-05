@@ -51,7 +51,7 @@ void timespec_diff(struct timespec *start, struct timespec *stop,
 	}
 }
 
-void* my_allocate(size_t size, int use_mmap, int use_huge, const char *usage) {
+auto my_allocate(size_t size, int use_mmap, int use_huge, const char *usage) -> void* {
 	void *mem = nullptr;
 
 	if (use_mmap) {
@@ -76,7 +76,7 @@ void* my_allocate(size_t size, int use_mmap, int use_huge, const char *usage) {
 	return mem;
 }
 
-static void* read_file(const char *filename, size_t *limit, int use_mmap, int use_huge) {
+static auto read_file(const char *filename, size_t *limit, int use_mmap, int use_huge) -> void* {
 	void *keys = nullptr;
 	size_t bytes = 0;
 
@@ -129,7 +129,7 @@ void print_sort(float *keys, size_t offset, size_t n) {
 }
 
 template <typename T>
-size_t verify_sort_kf(T *keys, size_t n) {
+auto verify_sort_kf(T *keys, size_t n) -> size_t {
 	printf("Verifying sort... ");
 	for (size_t i = 1 ; i < n ; ++i) {
 		if (keys[i-1] > keys[i]) {
@@ -145,7 +145,7 @@ size_t verify_sort_kf(T *keys, size_t n) {
 }
 
 template <typename T>
-int test_radix_sort(const char *filename, size_t entries, int use_mmap, int use_huge, uint64_t value_mask) {
+auto test_radix_sort(const char *filename, size_t entries, int use_mmap, int use_huge, uint64_t value_mask) -> int {
 
 	size_t bytes = sizeof(T)*entries;
 
@@ -209,7 +209,7 @@ int test_radix_sort(const char *filename, size_t entries, int use_mmap, int use_
 }
 
 
-int main(int argc, char *argv[])
+auto main(int argc, char *argv[]) -> int
 {
 	int entries = argc > 1 ? atoi(argv[1]) : 0;
 	int use_mmap = argc > 2 ? atoi(argv[2]) : 0;
