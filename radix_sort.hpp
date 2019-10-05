@@ -200,8 +200,9 @@ float* radix_sort(float * RESTRICT src, float * RESTRICT aux, size_t n) {
 		return src;
 	size_t hist[(1L << 8)*sizeof(*src)] = { 0 };
 	return radix_sort_internal_8<float,uint32_t>(src, aux, hist, n, [](const float &entry) {
-		uint32_t local; // = *reinterpret_cast<const uint32_t*>(&entry);
-		memcpy(&local, &entry, sizeof(local));
+		// Use memcpy instead of casting for type-punning
+		uint32_t local;
+		std::memcpy(&local, &entry, sizeof(local));
 		return (local ^ (-(local >> 31) | (1L << 31)));
 	});
 }
