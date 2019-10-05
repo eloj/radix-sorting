@@ -61,7 +61,7 @@ auto my_allocate(size_t size, int use_mmap, int use_huge, const char *usage) -> 
 	} else {
 		printf("Allocating %zu bytes for %s.\n", size, usage);
 		if (use_huge) {
-			int res = posix_memalign((void**)&mem, 1L << 21, size);
+			int res = posix_memalign((void**)&mem, 1UL << 21, size);
 			if (res) {
 				fprintf(stderr, "Failed to allocate: %d\n", res); // ENOMEM or EINVAL
 				abort();

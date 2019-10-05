@@ -1,6 +1,6 @@
 /*
 	WORK IN PROGRESS: C++ implementation of a 8xW-bit radix sort
-	WARNING: DO NOT USE IN PRODUCTION CODE.
+	WARNING: DO NOT USE IN PRODUCTION CODE. #lol
 
 	See https://github.com/eloj/radix-sorting
 
@@ -8,35 +8,23 @@
 		Use template magic to pick histogram counter size
 		Use template magic(?) to select KeyFunc
 		Hybridization: Fallback to simpler sort at overhead limit.
-
+		Fix unsigned shifts, if possible.
 */
 
 #define RESTRICT __restrict__
 
-/*
-	'isort3'; J.L Bentley, "Programming Pearls", column 11.1, page 116.
-*/
-template<typename T>
-static void
-insert_sort(T *arr, size_t n) {
-	T x;
-	size_t j;
-	for (size_t i = 1 ; i < n ; ++i) {
-		x = arr[i];
-		for (j = i ; j > 0 && arr[j-1] > x ; --j)
-			arr[j] = arr[j-1];
-		arr[j] = x;
-	}
-}
+constexpr uint8_t shift8 = 8;
+constexpr uint8_t shift16 = 16;
+constexpr uint8_t shift31 = 31;
+constexpr uint8_t shift32 = 32;
 
 template <typename T, typename KeyType = uint32_t, typename SizeType = size_t, typename KeyFunc>
 static auto radix_sort_internal_8(T * RESTRICT src, T * RESTRICT aux, SizeType * RESTRICT hist, size_t n, KeyFunc && kf) -> T* {
-	constexpr unsigned int hist_shift = 8;
-	constexpr unsigned int hist_len = 1L << hist_shift;
+	constexpr unsigned int hist_len = 1UL << shift8;
 	constexpr unsigned int hist_mask = hist_len - 1;
-	constexpr unsigned int wc = sizeof(KeyType); // * 8 / hist_shift;
+	constexpr unsigned int wc = sizeof(KeyType); // * 8 / shift8;
 	// Probably not worth it:
-	constexpr static const unsigned int shift_table[] = { 0, hist_shift, 2*hist_shift, 3*hist_shift, 4*hist_shift, 5*hist_shift, 6*hist_shift, 7*hist_shift };
+	constexpr static const unsigned int shift_table[] = { 0, shift8, 2*shift8, 3*shift8, 4*shift8, 5*shift8, 6*shift8, 7*shift8 };
 	int cols[wc];
 	int ncols = 0;
 	KeyType key0;
@@ -93,73 +81,9 @@ static auto radix_sort_internal_8(T * RESTRICT src, T * RESTRICT aux, SizeType *
 	return src;
 }
 
-template <typename T, typename KeyType = uint32_t, typename SizeType = size_t, typename KeyFunc>
-static auto radix_sort_internal_11(T * RESTRICT src, T * RESTRICT aux, SizeType * RESTRICT hist, size_t n, KeyFunc && kf) -> T* {
-	constexpr unsigned int hist_shift = 11;
-	constexpr unsigned int hist_len = 1L << hist_shift;
-	constexpr unsigned int hist_mask = hist_len - 1;
-	// Number of columns needed to cover 64, 32 and 16 bit wide types:
-	constexpr unsigned int wc = sizeof(KeyType) == 8 ? 6 : sizeof(KeyType) == 4 ? 3 : sizeof(KeyType) == 2 ? 2 : 1;
-	constexpr static const unsigned int shift_table[] = { 0, hist_shift, 2*hist_shift, 3*hist_shift, 4*hist_shift, 5*hist_shift, 6*hist_shift, 7*hist_shift };
-	int cols[wc];
-	int ncols = 0;
-	KeyType key0;
-
-	memset(hist, 0, hist_len * wc * sizeof(*hist));
-
-	// Histograms
-	size_t n_unsorted = n;
-	for (size_t i = 0 ; i < n ; ++i) {
-		// pre-sorted detection
-		key0 = kf(src[i]);
-		if ((i < n - 1) && (key0 <= kf(src[i+1]))) {
-			--n_unsorted;
-		}
-		for (unsigned int j = 0 ; j < wc ; ++j) {
-			++hist[(hist_len*j) + ((key0 >> shift_table[j]) & hist_mask)];
-		}
-	}
-
-	if (n_unsorted < 2) {
-		return src;
-	}
-
-	// Sample first key to determine if any columns can be skipped
-	key0 = kf(*src);
-	for (unsigned int i = 0 ; i < wc ; ++i) {
-		if (hist[(hist_len*i) + ((key0 >> shift_table[i]) & hist_mask)] != n) {
-			cols[ncols++] = i;
-		}
-	}
-
-	// Calculate offsets (exclusive scan)
-	for (int i = 0 ; i < ncols ; ++i) {
-		SizeType a = 0;
-		for (unsigned int j = 0 ; j < hist_len ; ++j) {
-			SizeType b = hist[(hist_len*cols[i]) + j];
-			hist[(hist_len*cols[i]) + j] = a;
-			a += b;
-		}
-	}
-
-	// Sort
-	for (int i = 0 ; i < ncols ; ++i) {
-		printf("Sorting column %d\n", cols[i]);
-		for (size_t j = 0 ; j < n ; ++j) {
-			T k = src[j];
-			SizeType dst = hist[(hist_len*cols[i]) + ((kf(k) >> shift_table[cols[i]]) & hist_mask)]++;
-			aux[dst] = k;
-		}
-		std::swap(src, aux);
-	}
-
-	// This can be either src or aux buffer, depending on odd/even number of columns sorted.
-	return src;
-}
-
 template<typename SizeType, typename ArrayType, typename KeyFunc>
 auto radix_sort_stackhist(ArrayType * RESTRICT src, ArrayType * RESTRICT aux, size_t n, KeyFunc && kf) -> ArrayType* {
-	SizeType hist[(1L << 8)*sizeof(*src)] = { 0 };
+	SizeType hist[(1UL << shift8)*sizeof(*src)] = { 0 };
 	return radix_sort_internal_8<ArrayType,ArrayType,SizeType>(src, aux, hist, n, kf);
 }
 
@@ -167,8 +91,8 @@ auto radix_sort_stackhist(ArrayType * RESTRICT src, ArrayType * RESTRICT aux, si
 // never use a type that hasn't been overridden below.
 template<typename ArrayType>
 auto radix_sort(ArrayType * RESTRICT src, ArrayType * RESTRICT aux, size_t n) -> ArrayType* {
-	if (n >= (1LL << 16)) {
-		if (n < (1LL << 32)) {
+	if (n >= (1ULL << shift16)) {
+		if (n < (1ULL << shift32)) {
 			return radix_sort_stackhist<uint32_t>(src, aux, n, [](const ArrayType& entry) {
 				return entry;
 			});
@@ -178,8 +102,9 @@ auto radix_sort(ArrayType * RESTRICT src, ArrayType * RESTRICT aux, size_t n) ->
 			});
 		}
 	} else {
-		if (n < 2)
+		if (n < 2) {
 			return src;
+		}
 		return radix_sort_stackhist<uint16_t>(src, aux, n, [](const ArrayType& entry) {
 			return entry;
 		});
@@ -187,22 +112,24 @@ auto radix_sort(ArrayType * RESTRICT src, ArrayType * RESTRICT aux, size_t n) ->
 }
 
 auto radix_sort(int32_t * RESTRICT src, int32_t * RESTRICT aux, size_t n) -> int32_t* {
-	if (n < 2)
+	if (n < 2) {
 		return src;
-	size_t hist[(1L << 8)*sizeof(*src)] = { 0 };
+	}
+	size_t hist[(1UL << shift8)*sizeof(*src)] = { 0 };
 	return radix_sort_internal_8<int32_t>(src, aux, hist, n, [](const int32_t& entry) {
-		return entry ^ (1L << 31);
+		return entry ^ (1UL << shift31);
 	});
 }
 
 auto radix_sort(float * RESTRICT src, float * RESTRICT aux, size_t n) -> float* {
-	if (n < 2)
+	if (n < 2) {
 		return src;
-	size_t hist[(1L << 8)*sizeof(*src)] = { 0 };
+	}
+	size_t hist[(1UL << shift8)*sizeof(*src)] = { 0 };
 	return radix_sort_internal_8<float,uint32_t>(src, aux, hist, n, [](const float &entry) {
 		// Use memcpy instead of casting for type-punning
 		uint32_t local;
 		std::memcpy(&local, &entry, sizeof(local));
-		return (local ^ (-(local >> 31) | (1L << 31)));
+		return (local ^ (-(local >> shift31) | (1UL << shift31)));
 	});
 }
