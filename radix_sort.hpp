@@ -5,9 +5,11 @@
 	See https://github.com/eloj/radix-sorting
 
 	TODO:
+		Use std::array?
 		Use template magic to pick histogram counter size
 		Use template magic(?) to select KeyFunc
-		Hybridization: Fallback to simpler sort at overhead limit.
+		Type-traits vs concepts (C++20)
+		Hybridization: Fallback to simpler sort at overhead limit (see 908f9a4660c9 for insert sort)
 		Fix unsigned shifts, if possible.
 */
 
@@ -24,7 +26,7 @@ static auto radix_sort_internal_8(T * RESTRICT src, T * RESTRICT aux, SizeType *
 	constexpr unsigned int hist_mask = hist_len - 1;
 	constexpr unsigned int wc = sizeof(KeyType); // * 8 / shift8;
 	// Probably not worth it:
-	constexpr static const unsigned int shift_table[] = { 0, shift8, 2*shift8, 3*shift8, 4*shift8, 5*shift8, 6*shift8, 7*shift8 };
+	constexpr std::array<const uint8_t, 8> shift_table = { 0, 8, 16, 24, 32, 40, 48, 56 };
 	int cols[wc];
 	int ncols = 0;
 	KeyType key0;
