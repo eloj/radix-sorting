@@ -52,10 +52,10 @@ void timespec_diff(struct timespec *start, struct timespec *stop,
 }
 
 void* my_allocate(size_t size, int use_mmap, int use_huge, const char *usage) {
-	void *mem = NULL;
+	void *mem = nullptr;
 
 	if (use_mmap) {
-		mem = (uint32_t*)mmap(NULL, size, PROT_READ | PROT_WRITE, RADIX_MMAP_FLAGS, -1, 0);
+		mem = (uint32_t*)mmap(nullptr, size, PROT_READ | PROT_WRITE, RADIX_MMAP_FLAGS, -1, 0);
 		assert(mem && mem != MAP_FAILED);
 		printf("Mapped memory at %p, %zu bytes for %s\n", mem, size, usage);
 	} else {
@@ -77,7 +77,7 @@ void* my_allocate(size_t size, int use_mmap, int use_huge, const char *usage) {
 }
 
 static void* read_file(const char *filename, size_t *limit, int use_mmap, int use_huge) {
-	void *keys = NULL;
+	void *keys = nullptr;
 	size_t bytes = 0;
 
 	FILE *f = fopen(filename, "rb");
@@ -96,7 +96,7 @@ static void* read_file(const char *filename, size_t *limit, int use_mmap, int us
 		fclose(f);
 		if (rnum != 1) {
 			free(keys);
-			return NULL;
+			return nullptr;
 		}
 	}
 
@@ -215,7 +215,7 @@ int main(int argc, char *argv[])
 	int use_mmap = argc > 2 ? atoi(argv[2]) : 0;
 	int use_huge = argc > 3 ? atoi(argv[3]) : 0;
 	const char *ktype = argc > 4 ? argv[4] : "uint32_t";
-	uint64_t value_mask = argc > 5 ? strtoull(argv[5], NULL, 16) : -1;
+	uint64_t value_mask = argc > 5 ? strtoull(argv[5], nullptr, 16) : -1;
 
 	// TODO: have some floating point test data.
 	// float f[] = { 128.0f, 646464.0f, 0.0f, -0.0f, -0.5f, 0.5f, -128.0f, -INFINITY, NAN, INFINITY};
