@@ -12,6 +12,7 @@
 		Hybridization: Fallback to simpler sort at overhead limit (see 908f9a4660c9 for insert sort)
 		Fix unsigned shifts, if possible.
 */
+#include <array>
 
 #define RESTRICT __restrict__
 
