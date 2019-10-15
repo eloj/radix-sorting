@@ -421,7 +421,10 @@ input and output buffer between the passes.
 After the 4:th (final) sorting pass, since this is an even number, the final result is available
 in the input buffer.
 
-Extending to larger keys, e.g 64-bit keys and beyond, can be achieved by simply adding more unrolled passes,
+A quick performance note: Having four distinct arrays for the histograms will almost certainly generate imperfect code,
+e.g you're likely to end up with separate calls to `memset`.
+
+Extending to larger keys, e.g 64-bit keys and beyond, can be achieved by simply adding more passes,
 but for completeness, let us instead look at how we can augment the function to sort in multiple passes via
 a _key-shift_ argument, as this is a very common implementation detail:
 
@@ -450,7 +453,8 @@ static void radix_sort_u32_multipass(struct sortrec *arr, struct sortrec *aux, s
 		uint32_t k = key_of(arr + i) >> keyshift;
 ```
 
-At each point we retrieve the key via `key_of`, we shift out any bits we've already processed in a previous pass.
+At each point we retrieve the key via `key_of`, we shift out any bits we've already processed in a previous pass,
+passed in as `keyshift`.
 
 We can then sort 64-bit wide by calling the sort function twice as such:
 
@@ -587,7 +591,10 @@ This looks complex, but the left side of the parenthetical converts a set sign-b
 invert the whole key. The second expression in the parenthetical (after the bitwise or) sets the sign bit, which is a no-op if it was already set, but
 otherwise ensures that the `xor` flips the sign-bit only.
 
-As an implementation detail for C and C++, `key` is the floating point key reinterpreted (cast) as an unsigned 32-bit integer, this in order for the bit-manipulation to be allowed.
+As an implementation detail for C and C++, `key` is the floating point key reinterpreted as an unsigned 32-bit integer to allow
+the bit-manipulation. This sort of _type-punning_, if done naively, can be considered _undefined behaviour_ (UB). Post C++20 you should
+have to option to use `bit_cast<T>()` to do this in a well-defined way, but without that option we instead use `memcpy` into a local
+temporary. This pattern is recognized by compilers, but as always you should inspect the generated code to make sure.
 
 Example for sorting `{ 128.0f, 646464.0f, 0.0f, -0.0f, -0.5f, 0.5f, -128.0f, -INFINITY, NAN, INFINITY }`:
 
@@ -816,7 +823,7 @@ giving us the best of both worlds.
 The cost of allocating the auxiliary sorting buffer is not included in the timings by default. If you care
 about that the benchmark can be easily updated to move the aux buffer allocation into the benchmark loop.
 In practice, repeated allocation and deallocation of the same-sized block is likely to be immaterial,
-especially when there is little other pressure on the memory allocator.
+especially when there is little other pressure on the memory allocator during the benchmark.
 
 Because we're sorting random data, the column-skipping optimization is very unlikely to kick in, so while
 the benchmark is realistic, it is by no means a best-case scenario.
