@@ -184,7 +184,7 @@ the value of `cnt[j]` tells us the array index at which to write the first _j_ t
 contains the <em>sum count</em> of all elements that would precede ('sort lower than') _j_.
 
 For instance, `cnt[0]` will always be zero, because any `0` will always end up in the first
-position in the output (we're assuming only positiv integers for now). `cnt[1]` will contain
+position in the output (we're assuming only non-negative integers for now). `cnt[1]` will contain
 how many zeroes precede the first `1`, `cnt[2]` will contain how many zeroes _and_ ones precede
 the first `2`, and so on.
 
@@ -717,10 +717,11 @@ it less likely for the column skipping to kick in, and adds a few extra masking 
 
 Going narrower could allow us to skip more columns in common workloads. There's definitely
 room for experimentation in this area, maybe even trying non-uniformly wide radixes (8-16-8) or
-dynamic selection of radix widths.
+dynamic selection of radix widths. If the data you're sorting isn't random, adapting the
+radix to the data may yield positive results.
 
 That said, in my limited initial testing, neither 4- nor 11-bit wide radix showed any promise
-at all in sorting 32-bit integers. Quite the contrary, both were bad across the board.
+at all in sorting _random_ 32-bit integers. Quite the contrary, both were bad across the board.
 
 The 4-bit version never had much going for it, so no big surprise there. Perhaps if you have
 to sort on a tiny microprocessor it may be worth going down in radix, but on a modern "big CPU"
