@@ -42,6 +42,7 @@ CXXFLAGS=-std=gnu++17 -fno-rtti $(OPT) $(WARNFLAGS) $(MISCFLAGS)
 
 examples=counting_sort_8 counting_sort_8s counting_sort_rec_sk \
 		 radix_sort_u32 radix_sort_u32_ranks radix_sort_u64_multipass \
+		 radix_tests \
 		 bitmap_sort_16
 
 .PHONY: genkeys clean
