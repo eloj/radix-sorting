@@ -10,19 +10,19 @@
 
 #define RESTRICT __restrict__
 
-template<typename T, typename KeyFunc, typename HT=size_t, size_t HN>
-// std::enable_if_t<std::is_integral_v<T> || std::is_floating_point_v<T>, T*>
-T* rs_sort_main(T* RESTRICT src, T* RESTRICT aux, size_t n, std::array<HT,HN>& histogram, KeyFunc && kf) {
+template<typename T, typename KeyFunc, typename Hist>
+T* rs_sort_main(T* RESTRICT src, T* RESTRICT aux, size_t n, Hist& histogram, KeyFunc && kf) {
+	typedef typename Hist::value_type HVT;
 	static_assert(sizeof(T) <= 8, "Sort key must be 64-bits or less");
 
-	if (n == 0)
+	if (n < 2)
 		return src;
 
-	auto key0 = kf(src[0]);
+	auto key0 = kf(*src);
 
-	constexpr std::array<uint8_t, 8> shift_table = { 0, 8, 16, 24, 32, 40, 48, 56 };
 	size_t wc = sizeof(key0);
-	size_t hist_len = HN/wc;
+	constexpr std::array<uint8_t, 8> shift_table = { 0, 8, 16, 24, 32, 40, 48, 56 };
+	unsigned int hist_len = 256; // histogram.size()/wc;
 	unsigned int cols[wc];
 	unsigned int ncols = 0;
 
@@ -53,9 +53,9 @@ T* rs_sort_main(T* RESTRICT src, T* RESTRICT aux, size_t n, std::array<HT,HN>& h
 
 	// Calculate offsets (exclusive scan)
 	for (unsigned int i = 0 ; i < ncols ; ++i) {
-		HT a = 0;
+		HVT a = 0;
 		for (unsigned int j = 0 ; j < hist_len ; ++j) {
-			HT b = histogram[(hist_len*cols[i]) + j];
+			HVT b = histogram[(hist_len*cols[i]) + j];
 			histogram[(hist_len*cols[i]) + j] = a;
 			a += b;
 		}
@@ -82,27 +82,27 @@ constexpr typename std::make_unsigned<T>::type highbit(void) {
 	return a;
 }
 
-template<typename T, typename KT=T, typename HT=size_t, size_t HN=256*sizeof(KT)>
+template<typename T, typename KT=T, typename HT>
 std::enable_if_t<std::is_integral_v<T> && std::is_unsigned_v<T> && !std::is_same_v<T,bool>, T*>
-rs_select_kf(T* RESTRICT src, T* RESTRICT aux, size_t n, std::array<HT,HN>& histogram) {
+rs_select_kf(T* RESTRICT src, T* RESTRICT aux, size_t n, HT& histogram) {
 	auto kf_unsigned = [](const T& entry) -> KT {
 			return entry;
 	};
 	return rs_sort_main(src, aux, n, histogram, kf_unsigned);
 }
 
-template<typename T, typename KT=std::make_unsigned<T>, typename HT=size_t, size_t HN=256*sizeof(KT)>
+template<typename T, typename KT=std::make_unsigned<T>, typename HT>
 std::enable_if_t<std::is_integral_v<T> && std::is_signed_v<T> && !std::is_same_v<T,bool>, T*>
-rs_select_kf(T* RESTRICT src, T* RESTRICT aux, size_t n, std::array<HT,HN>& histogram) {
+rs_select_kf(T* RESTRICT src, T* RESTRICT aux, size_t n, HT& histogram) {
 	auto kf_signed = [](const T& entry) -> typename KT::type {
 		return entry ^ highbit<T>();
 	};
 	return rs_sort_main(src, aux, n, histogram, kf_signed);
 }
 
-template<typename T, typename KT=uint32_t, typename HT=size_t, size_t HN=256*sizeof(KT)>
+template<typename T, typename KT=uint32_t, typename HT>
 std::enable_if_t<std::is_same_v<T,float>, T*>
-rs_select_kf(T* RESTRICT src, T* RESTRICT aux, size_t n, std::array<HT,HN>& histogram) {
+rs_select_kf(T* RESTRICT src, T* RESTRICT aux, size_t n, HT& histogram) {
 	auto kf_float = [](const T& entry) -> KT {
 		KT local;
 		std::memcpy(&local, &entry, sizeof(local));
@@ -111,9 +111,9 @@ rs_select_kf(T* RESTRICT src, T* RESTRICT aux, size_t n, std::array<HT,HN>& hist
 	return rs_sort_main(src, aux, n, histogram, kf_float);
 }
 
-template<typename T, typename KT=uint64_t, typename HT=size_t, size_t HN=256*sizeof(KT)>
+template<typename T, typename KT=uint64_t, typename HT>
 std::enable_if_t<std::is_same_v<T,double>, T*>
-rs_select_kf(T* RESTRICT src, T* RESTRICT aux, size_t n, std::array<HT,HN>& histogram) {
+rs_select_kf(T* RESTRICT src, T* RESTRICT aux, size_t n, HT& histogram) {
 	auto kf_double = [](const T& entry) -> KT {
 		KT local;
 		std::memcpy(&local, &entry, sizeof(local));
