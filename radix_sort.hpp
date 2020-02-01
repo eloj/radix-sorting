@@ -4,36 +4,27 @@
 
 	See https://github.com/eloj/radix-sorting
 
-	TODO:
-		Use std::array?
-		Use template magic to pick histogram counter size
-		Use template magic(?) to select KeyFunc
-		Type-traits vs concepts (C++20)
-		Hybridization: Fallback to simpler sort at overhead limit (see 908f9a4660c9 for insert sort)
-		Fix unsigned shifts, if possible.
 */
 #include <array>
+#include <cinttypes>
 
 #define RESTRICT __restrict__
 
-constexpr uint8_t shift8 = 8;
-constexpr uint8_t shift16 = 16;
-constexpr uint8_t shift31 = 31;
-constexpr uint8_t shift32 = 32;
+template<typename T, typename KeyFunc, typename HT=size_t, size_t HN>
+// std::enable_if_t<std::is_integral_v<T> || std::is_floating_point_v<T>, T*>
+T* rs_sort_main(T* RESTRICT src, T* RESTRICT aux, size_t n, std::array<HT,HN>& histogram, KeyFunc && kf) {
+	static_assert(sizeof(T) <= 8, "Sort key must be 64-bits or less");
 
-template <typename T, typename KeyType = uint32_t, typename SizeType = size_t, typename KeyFunc>
-static auto radix_sort_internal_8(T * RESTRICT src, T * RESTRICT aux, SizeType * RESTRICT hist, size_t n, KeyFunc && kf) -> T* {
-	constexpr unsigned int hist_len = 1UL << shift8;
-	constexpr unsigned int hist_mask = hist_len - 1;
-	constexpr unsigned int wc = sizeof(KeyType); // * 8 / shift8;
-	// Probably not worth it:
-	constexpr std::array<const uint8_t, 8> shift_table = { 0, 8, 16, 24, 32, 40, 48, 56 };
-	int cols[wc];
-	int ncols = 0;
-	KeyType key0;
+	if (n == 0)
+		return src;
 
-	// printf("histogram size = %d * %d * %zu = %zu bytes\n", hist_len, wc, sizeof(*hist), hist_len * wc * sizeof(*hist));
-	// memset(hist, 0, hist_len * wc * sizeof(*hist));
+	auto key0 = kf(src[0]);
+
+	constexpr std::array<uint8_t, 8> shift_table = { 0, 8, 16, 24, 32, 40, 48, 56 };
+	size_t wc = sizeof(key0);
+	size_t hist_len = HN/wc;
+	unsigned int cols[wc];
+	unsigned int ncols = 0;
 
 	// Histograms
 	size_t n_unsorted = n;
@@ -44,7 +35,7 @@ static auto radix_sort_internal_8(T * RESTRICT src, T * RESTRICT aux, SizeType *
 			--n_unsorted;
 		}
 		for (unsigned int j = 0 ; j < wc ; ++j) {
-			++hist[(hist_len*j) + ((key0 >> shift_table[j]) & hist_mask)];
+			++histogram[(hist_len*j) + ((key0 >> shift_table[j]) & 0xFF)];
 		}
 	}
 
@@ -55,84 +46,104 @@ static auto radix_sort_internal_8(T * RESTRICT src, T * RESTRICT aux, SizeType *
 	// Sample first key to determine if any columns can be skipped
 	key0 = kf(*src);
 	for (unsigned int i = 0 ; i < wc ; ++i) {
-		if (hist[(hist_len*i) + ((key0 >> shift_table[i]) & hist_mask)] != n) {
+		if (histogram[(hist_len*i) + ((key0 >> shift_table[i]) & 0xFF)] != n) {
 			cols[ncols++] = i;
 		}
 	}
 
 	// Calculate offsets (exclusive scan)
-	for (int i = 0 ; i < ncols ; ++i) {
-		SizeType a = 0;
+	for (unsigned int i = 0 ; i < ncols ; ++i) {
+		HT a = 0;
 		for (unsigned int j = 0 ; j < hist_len ; ++j) {
-			SizeType b = hist[(hist_len*cols[i]) + j];
-			hist[(hist_len*cols[i]) + j] = a;
+			HT b = histogram[(hist_len*cols[i]) + j];
+			histogram[(hist_len*cols[i]) + j] = a;
 			a += b;
 		}
 	}
 
 	// Sort
-	for (int i = 0 ; i < ncols ; ++i) {
+	for (unsigned int i = 0 ; i < ncols ; ++i) {
 		for (size_t j = 0 ; j < n ; ++j) {
-			T k = src[j];
-			SizeType dst = hist[(hist_len*cols[i]) + ((kf(k) >> shift_table[cols[i]]) & hist_mask)]++;
+			auto k = src[j];
+			size_t dst = histogram[(hist_len*cols[i]) + ((kf(k) >> shift_table[cols[i]]) & 0xFF)]++;
 			aux[dst] = k;
 		}
 		std::swap(src, aux);
 	}
 
-	// This can be either src or aux buffer, depending on odd/even number of columns sorted.
 	return src;
 }
 
-template<typename SizeType, typename ArrayType, typename KeyFunc>
-auto radix_sort_stackhist(ArrayType * RESTRICT src, ArrayType * RESTRICT aux, size_t n, KeyFunc && kf) -> ArrayType* {
-	SizeType hist[(1UL << shift8)*sizeof(*src)] = { 0 };
-	return radix_sort_internal_8<ArrayType,ArrayType,SizeType>(src, aux, hist, n, kf);
+// Helper template to return a T with the MSB set.
+template<typename T>
+constexpr typename std::make_unsigned<T>::type highbit(void) {
+	typedef typename std::make_unsigned<T>::type UT;
+	UT a = ((UT)-1) ^ (((UT)-1) >> 1);
+	return a;
 }
 
-// Common code for the unsigned integers. A bit dangerous,
-// never use a type that hasn't been overridden below.
-template<typename ArrayType>
-auto radix_sort(ArrayType * RESTRICT src, ArrayType * RESTRICT aux, size_t n) -> ArrayType* {
-	if (n >= (1ULL << shift16)) {
-		if (n < (1ULL << shift32)) {
-			return radix_sort_stackhist<uint32_t>(src, aux, n, [](const ArrayType& entry) {
-				return entry;
-			});
-		} else {
-			return radix_sort_stackhist<size_t>(src, aux, n, [](const ArrayType& entry) {
-				return entry;
-			});
-		}
-	} else {
-		if (n < 2) {
-			return src;
-		}
-		return radix_sort_stackhist<uint16_t>(src, aux, n, [](const ArrayType& entry) {
+template<typename T, typename KT=T, typename HT=size_t, size_t HN=256*sizeof(KT)>
+std::enable_if_t<std::is_integral_v<T> && std::is_unsigned_v<T> && !std::is_same_v<T,bool>, T*>
+rs_select_kf(T* RESTRICT src, T* RESTRICT aux, size_t n, std::array<HT,HN>& histogram) {
+	auto kf_unsigned = [](const T& entry) -> KT {
 			return entry;
-		});
-	}
+	};
+	return rs_sort_main(src, aux, n, histogram, kf_unsigned);
 }
 
-auto radix_sort(int32_t * RESTRICT src, int32_t * RESTRICT aux, size_t n) -> int32_t* {
-	if (n < 2) {
-		return src;
-	}
-	size_t hist[(1UL << shift8)*sizeof(*src)] = { 0 };
-	return radix_sort_internal_8<int32_t>(src, aux, hist, n, [](const int32_t& entry) {
-		return entry ^ (1UL << shift31);
-	});
+template<typename T, typename KT=std::make_unsigned<T>, typename HT=size_t, size_t HN=256*sizeof(KT)>
+std::enable_if_t<std::is_integral_v<T> && std::is_signed_v<T> && !std::is_same_v<T,bool>, T*>
+rs_select_kf(T* RESTRICT src, T* RESTRICT aux, size_t n, std::array<HT,HN>& histogram) {
+	auto kf_signed = [](const T& entry) -> typename KT::type {
+		return entry ^ highbit<T>();
+	};
+	return rs_sort_main(src, aux, n, histogram, kf_signed);
 }
 
-auto radix_sort(float * RESTRICT src, float * RESTRICT aux, size_t n) -> float* {
-	if (n < 2) {
-		return src;
-	}
-	size_t hist[(1UL << shift8)*sizeof(*src)] = { 0 };
-	return radix_sort_internal_8<float,uint32_t>(src, aux, hist, n, [](const float &entry) {
-		// Use memcpy instead of casting for type-punning
-		uint32_t local;
+template<typename T, typename KT=uint32_t, typename HT=size_t, size_t HN=256*sizeof(KT)>
+std::enable_if_t<std::is_same_v<T,float>, T*>
+rs_select_kf(T* RESTRICT src, T* RESTRICT aux, size_t n, std::array<HT,HN>& histogram) {
+	auto kf_float = [](const T& entry) -> KT {
+		KT local;
 		std::memcpy(&local, &entry, sizeof(local));
-		return (local ^ (-(local >> shift31) | (1UL << shift31)));
-	});
+		return local ^ (-(local >> 31UL) | (1UL << 31UL));
+	};
+	return rs_sort_main(src, aux, n, histogram, kf_float);
 }
+
+template<typename T, typename KT=uint64_t, typename HT=size_t, size_t HN=256*sizeof(KT)>
+std::enable_if_t<std::is_same_v<T,double>, T*>
+rs_select_kf(T* RESTRICT src, T* RESTRICT aux, size_t n, std::array<HT,HN>& histogram) {
+	auto kf_double = [](const T& entry) -> KT {
+		KT local;
+		std::memcpy(&local, &entry, sizeof(local));
+		return local ^ (-(local >> 63ULL) | (1ULL << 63ULL));
+	};
+	return rs_sort_main(src, aux, n, histogram, kf_double);
+}
+
+template<typename T>
+T* radix_sort(T* RESTRICT src, T* RESTRICT aux, size_t n) {
+	if (n < 256) {
+		std::array<uint8_t,256*sizeof(T)> histogram{0};
+		return rs_select_kf(src, aux, n, histogram);
+	} else if (n < (1ULL << 16ULL)) {
+		std::array<uint16_t,256*sizeof(T)> histogram{0};
+		return rs_select_kf(src, aux, n, histogram);
+	} else if (n < (1ULL << 32ULL)) {
+		std::array<uint32_t,256*sizeof(T)> histogram{0};
+		return rs_select_kf(src, aux, n, histogram);
+	} else {
+		std::array<uint64_t,256*sizeof(T)> histogram{0};
+		return rs_select_kf(src, aux, n, histogram);
+	}
+}
+
+/*
+template<typename T, typename KeyFunc>
+T* radix_sort(T* RESTRICT src, T* RESTRICT aux, size_t n, KeyFunc && kf) {
+	std::array<size_t,256*sizeof(T)> histogram{0};
+
+	return rs_sort_main(src, aux, histogram, n, kf);
+}
+*/

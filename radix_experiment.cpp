@@ -128,6 +128,13 @@ void print_sort(float *keys, size_t offset, size_t n) {
 	}
 }
 
+template <>
+void print_sort(double *keys, size_t offset, size_t n) {
+	for (size_t i = offset ; i < offset + n ; ++i) {
+		printf("%16zu: %f\n", i, keys[i]);
+	}
+}
+
 template <typename T>
 auto verify_sort_kf(T *keys, size_t n) -> size_t {
 	printf("Verifying sort... ");
@@ -171,7 +178,7 @@ auto test_radix_sort(const char *filename, size_t entries, int use_mmap, int use
 	struct timespec tp_start;
 	struct timespec tp_end;
 
-	printf("Sorting %zu integers...\n", n);
+	printf("Sorting %zu entries...\n", n);
 	clock_gettime(CLOCK_MONOTONIC_RAW, &tp_start);
 	auto *sorted = radix_sort(src, aux, n);
 	clock_gettime(CLOCK_MONOTONIC_RAW, &tp_end);
@@ -221,7 +228,7 @@ auto main(int argc, char *argv[]) -> int
 	// float f[] = { 128.0f, 646464.0f, 0.0f, -0.0f, -0.5f, 0.5f, -128.0f, -INFINITY, NAN, INFINITY};
 
 	if (argc == 1) {
-		printf("Usage: %s <count> [<use_mmap> <use_huge> <uint8_t|uint16_t|uint32_t|uint64_t|int32_t|float> <hex-mask>]\n", argv[0]);
+		printf("Usage: %s <count> [<use_mmap> <use_huge> <uint8_t|uint16_t|uint32_t|uint64_t|int32_t|int64_t|float|double> <hex-mask>]\n", argv[0]);
 		exit(0);
 	}
 
@@ -233,6 +240,8 @@ auto main(int argc, char *argv[]) -> int
 	printf("src='%s', entries=%d, use_mmap=%d, use_huge=%d, type='%s', mask=0x%08lx \n", src_fn, entries, use_mmap, use_huge, ktype, value_mask);
 
 	int res = 100;
+	// TODO: special-case for bool
+	//
 	if (strcmp(ktype, "uint8_t") == 0) {
 		res = test_radix_sort<uint8_t>(src_fn, entries, use_mmap, use_huge, value_mask);
 	} else if (strcmp(ktype, "uint16_t") == 0) {
@@ -243,8 +252,12 @@ auto main(int argc, char *argv[]) -> int
 		res = test_radix_sort<uint64_t>(src_fn, entries, use_mmap, use_huge, value_mask);
 	} else if (strcmp(ktype, "int32_t") == 0) {
 		res = test_radix_sort<int32_t>(src_fn, entries, use_mmap, use_huge, value_mask);
+	} else if (strcmp(ktype, "int64_t") == 0) {
+		res = test_radix_sort<int64_t>(src_fn, entries, use_mmap, use_huge, value_mask);
 	} else if (strcmp(ktype, "float") == 0) {
 		res = test_radix_sort<float>(src_fn, entries, use_mmap, use_huge, value_mask);
+	} else if (strcmp(ktype, "double") == 0) {
+		res = test_radix_sort<double>(src_fn, entries, use_mmap, use_huge, value_mask);
 	} else {
 		printf("Error: unknown key type, '%s'.\n", ktype);
 	}
