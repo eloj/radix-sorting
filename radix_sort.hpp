@@ -4,6 +4,9 @@
 
 	See https://github.com/eloj/radix-sorting
 
+	TODO:
+		Do away with shift-table (support any number of passes?)
+		Smarter deduction of kdf
 */
 #include <array>
 #include <type_traits>
@@ -20,13 +23,12 @@ T* rs_sort_main(T* RESTRICT src, T* RESTRICT aux, size_t n, Hist& histogram, Key
 	if (n < 2)
 		return src;
 
-	auto key0 = kf(*src);
-
-	size_t wc = sizeof(key0);
+	constexpr size_t wc = sizeof(KeyType);
 	constexpr std::array<uint8_t, 8> shift_table = { 0, 8, 16, 24, 32, 40, 48, 56 };
-	unsigned int hist_len = 256; // histogram.size()/wc;
+	constexpr unsigned int hist_len = 256;
 	unsigned int cols[wc];
 	unsigned int ncols = 0;
+	KeyType key0;
 
 	// Histograms
 	size_t n_unsorted = n;

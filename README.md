@@ -813,9 +813,9 @@ For other architectures this may be more viable.
 _TODO: This code is very much a work in progress, used to test various techniques, and does NOT represent a final 'product'._
 
 [radix_sort.hpp](radix_sort.hpp)
-[radix_experiment.cpp](radix_experiment.cpp)
+[radix_tests.cpp](radix_tests.cpp)
 
-By default this code builds into an executable called `radix`. This is a test harness of sorts, with some options
+By default we build an executable called `radix`. This is a test harness of sorts, with some options
 to let you test different setups.
 
 ```bash
