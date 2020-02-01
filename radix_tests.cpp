@@ -34,11 +34,11 @@ auto kdf_sortrec = [](const struct sortrec& entry) -> uint8_t {
 	return entry.key;
 };
 
-bool test_sortrec() {
+bool test_sortrec(bool verbose) {
 	size_t SZ = sizeof(source_arr);
 	size_t N = SZ/sizeof(source_arr[0]);
 
-	printf("Sorting struct sortrec\n");
+	printf("Sorting struct sortrec... ");
 
 	struct sortrec *src = new struct sortrec[SZ];
 	struct sortrec *aux = new struct sortrec[SZ];
@@ -49,7 +49,10 @@ bool test_sortrec() {
 
 	bool fail = !std::is_sorted(res, res+N, cmp_sortrec);
 
-	print_sortrec(res, N);
+	printf("%s\n", fail ? "FAILED" : "OK");
+
+	if (verbose)
+		print_sortrec(res, N);
 
 	delete[] src;
 	delete[] aux;
@@ -71,10 +74,10 @@ void print_sortrec_ptr(const struct sortrec **arr, size_t n) {
 	}
 }
 
-bool test_sortrec_ptr() {
+bool test_sortrec_ptr(bool verbose) {
 	size_t N = sizeof(source_arr)/sizeof(source_arr[0]);
 
-	printf("Sorting struct sortrec** (reverse)\n");
+	printf("Sorting struct sortrec** (reverse)... ");
 
 	auto src = new const struct sortrec*[N];
 	auto aux = new const struct sortrec*[N];
@@ -87,7 +90,10 @@ bool test_sortrec_ptr() {
 
 	bool fail = !std::is_sorted(res, res+N, cmp_sortrec_ptr);
 
-	print_sortrec_ptr(res, N);
+	printf("%s\n", fail ? "FAILED" : "OK");
+
+	if (verbose)
+		print_sortrec_ptr(res, N);
 
 	delete[] src;
 	delete[] aux;
@@ -103,28 +109,33 @@ void print_float(float *arr, size_t n) {
 	}
 }
 
-bool test_float() {
+bool test_float(bool verbose) {
 	float src[] = { 128.0f, 646464.0f, 0.0f, -0.0f, -0.5f, 0.5f, -128.0f, -INFINITY, NAN, INFINITY};
 	size_t N = sizeof(src)/sizeof(src[0]);
 	float aux[N];
 
-	printf("Sorting float[]\n");
+	printf("Sorting float[]... ");
 
 	auto res = radix_sort(src, aux, N);
 
 	bool fail = !std::is_sorted(res, res+N);
 
-	print_float(res, N);
+	printf("%s\n", fail ? "FAILED" : "OK");
+
+	if (verbose)
+		print_float(res, N);
 
 	return fail;
 }
 
 
 int main(int argc, char *argv[]) {
+	bool verbose = false;
+
 	bool failed =
-		test_sortrec() |
-		test_sortrec_ptr() |
-		test_float()
+		test_sortrec(verbose) |
+		test_sortrec_ptr(verbose) |
+		test_float(verbose)
 	;
 
 	if (failed) {
@@ -132,5 +143,6 @@ int main(int argc, char *argv[]) {
 		return EXIT_FAILURE;
 	}
 
+	printf("All tests OK.\n");
 	return EXIT_SUCCESS;
 }

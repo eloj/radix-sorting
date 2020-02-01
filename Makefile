@@ -49,8 +49,8 @@ examples=counting_sort_8 counting_sort_8s counting_sort_rec_sk \
 
 all: $(examples) radix radix_bench
 
-test: radix genkeys
-	${TEST_PREFIX} ./radix 0 1
+test: radix_tests
+	${TEST_PREFIX} ./radix_tests
 
 bench: radix_bench genkeys
 	./radix_bench --benchmark_counters_tabular=true
