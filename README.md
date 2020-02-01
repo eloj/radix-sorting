@@ -37,6 +37,7 @@ All code is provided under the [MIT License](LICENSE).
     + [Hybrids](#hybrids)
     + [Pre-sorted detection](#sort-detection)
     + [Column skipping](#column-skipping)
+    + [Key compaction](#key-compaction)
     + [Histogram memory](#histogram-memory)
     + [Wider or narrower radix](#radix-width)
     + [Key rewriting](#key-rewriting)
@@ -686,6 +687,41 @@ Skipping columns has the side-effect of the final sorted result ending up in eit
 original input buffer or the auxiliary buffer, depending on whether you sorted an even
 or odd number of columns. I prefer to have the sort function return the pointer
 to the result, rather than add a copy step.
+
+### <a name="key-compaction"></a >Key compaction
+
+_This section is under development, speculative, and has not been implemented_
+
+The opportunity for column-skipping is fast and easy to detect, and efficient
+when activated, but suffers from limited opportunity in practice due to the
+requirement that every input entry has the same value in the column. The
+higher the radix (wider column), the fewer opportunities for skipping.
+
+If we reduced the column width to one single bit, then any column where all
+the bits are 0s or 1s could be skipped, at the cost of having to do key-width
+number of passes worst-case.
+
+The insight here is that we only care about columns with mixed values, so we
+should never have to do more passes than there are such columns. The problem
+is that we do not want to use radix-1 because looking at a single bit at a
+time is not efficient in practice.
+
+However, this gives rise to the following idea; we should be able to re-arrange
+the bit-columns in the key, as long as we preserve the relative order of the
+underlying sort keys, such that we maximize opportunity for column skipping.
+
+In other words, if we know which 1-bit columns are irrelevant, i.e those which
+are all the same bit-value, then we could use our key-derivation function
+to partition the key such that all relevant columns move to towards the LSB,
+and all irrelevant towards the MSB, and as long as we preserve the relative
+order of _relevant columns_, this should create opportunity for a wider radix
+to skip columns at the MSB end of the key.
+
+In essence, our derived key now consists only of those key bits that are relevant.
+
+While detecting which columns are relevant can be done efficiently in one
+pass with simple bit-operations, it's not immediately obvious how the partitioning
+step of key compaction can be done efficiently in software. This is an active area of research.
 
 ### <a name="histogram-memory"></a> Histogram memory
 
