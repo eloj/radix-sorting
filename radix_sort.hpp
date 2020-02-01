@@ -7,6 +7,7 @@
 */
 #include <array>
 #include <cinttypes>
+#include <cstring> // for std::memcpy
 
 #define RESTRICT __restrict__
 
