@@ -3,7 +3,7 @@ LTOFLAGS=-flto -fno-fat-lto-objects -fuse-linker-plugin
 WARNFLAGS=-Wall -Wextra -Wshadow -Wstrict-aliasing -Wcast-qual -Wcast-align -Wpointer-arith -Wredundant-decls -Wfloat-equal -Wswitch-enum
 CWARNFLAGS=-Wstrict-prototypes -Wmissing-prototypes
 MISCFLAGS=-fstack-protector -fvisibility=hidden
-DEVFLAGS = -Wno-unused-parameter -Wno-unused-variable
+DEVFLAGS=-Wno-unused-parameter -Wno-unused-variable
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'

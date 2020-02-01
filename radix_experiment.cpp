@@ -14,7 +14,6 @@
 #include <cstring>
 #include <cinttypes>
 #include <ctime>
-#include <cmath>
 #include <cassert>
 #include <algorithm>
 #include <sys/mman.h> // for mmap
@@ -246,9 +245,6 @@ auto main(int argc, char *argv[]) -> int
 	int use_huge = argc > 3 ? atoi(argv[3]) : 0;
 	const char *ktype = argc > 4 ? argv[4] : "uint32_t";
 	uint64_t value_mask = argc > 5 ? strtoull(argv[5], nullptr, 16) : -1;
-
-	// TODO: have some floating point test data.
-	// float f[] = { 128.0f, 646464.0f, 0.0f, -0.0f, -0.5f, 0.5f, -128.0f, -INFINITY, NAN, INFINITY};
 
 	if (argc == 1) {
 		printf("Usage: %s <count> [<use_mmap> <use_huge> <uint8_t|uint16_t|uint32_t|uint64_t|int32_t|int64_t|float|double> <hex-mask>]\n", argv[0]);
