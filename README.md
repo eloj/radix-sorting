@@ -556,12 +556,16 @@ is how we're able to handle signed integers, floating point keys, and chose a so
 ### <a name="ordering"></a> Sort order
 
 The natural ordering for the unsigned integers is in _ascending_ order. If we instead want to sort
-in _descending_ order, simply have the _key-derivation_ function return the bitwise inverse
+in _descending_ (reverse) order, simply have the _key-derivation_ function return the bitwise inverse
 (or [complement](https://en.wikipedia.org/wiki/Bitwise_operation#NOT)) of the key:
 
 ```c
 	return ~key; // unsigned (desc)
 ```
+
+Note that for like-keys, the first record in the _forward-direction_ of the input will also be the
+first record in the output. If this is not what you want, I suggest using a standard ascending sort
+and reading the result backwards, which obviously will give you the _last_ like-key record first.
 
 ### <a name="signed-keys"></a>Signed integer keys
 
