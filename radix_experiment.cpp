@@ -137,18 +137,41 @@ void print_sort(double *keys, size_t offset, size_t n) {
 
 template <typename T>
 auto verify_sort_kf(T *keys, size_t n) -> size_t {
+	// Could Use std::is_sorted(keys, keys+n); from <algorithm> but no index.
 	printf("Verifying sort... ");
+	size_t forward_fail = 0;
 	for (size_t i = 1 ; i < n ; ++i) {
 		if (keys[i-1] > keys[i]) {
-			printf("Sort of array invalid at index %zu, %p.\n", i, keys);
-			printf("%zu: %" PRIx64 " > ", i-1, (uint64_t)keys[i-1]);
-			printf("%zu: %" PRIx64 "\n", i, (uint64_t)keys[i]);
-			return 1;
+			forward_fail = i;
+			break;
 		}
 	}
-	printf("OK.\n");
+	if (forward_fail == 0) {
+		printf("Forward sorted OK.\n");
+		return 0;
+	}
 
-	return 0;
+	size_t reverse_fail = 0;
+	for (size_t i = 1 ; i < n ; ++i) {
+		if (keys[i-1] < keys[i]) {
+			reverse_fail = i;
+			break;
+		}
+	}
+	if (reverse_fail == 0) {
+		printf("Reverse sorted OK.\n");
+		return 0;
+	}
+
+	printf("Forward sort of array invalid at index %zu.\n", forward_fail);
+	printf("%zu: %" PRIx64 " < ", forward_fail-1, (uint64_t)keys[forward_fail-1]);
+	printf("%zu: %" PRIx64 "\n", forward_fail, (uint64_t)keys[forward_fail]);
+
+	printf("Reverse sort of array invalid at index %zu.\n", reverse_fail);
+	printf("%zu: %" PRIx64 " < ", reverse_fail-1, (uint64_t)keys[reverse_fail-1]);
+	printf("%zu: %" PRIx64 "\n", reverse_fail, (uint64_t)keys[reverse_fail]);
+
+	return 1;
 }
 
 template <typename T>
