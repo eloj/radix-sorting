@@ -1,3 +1,8 @@
+/*
+	Radix Sort tests.
+
+	See https://github.com/eloj/radix-sorting
+*/
 #include "radix_sort.hpp"
 
 #include <algorithm>
@@ -48,9 +53,9 @@ bool test_sortrec(bool verbose) {
 
 	struct sortrec *res = radix_sort(src, aux, N, kdf_sortrec);
 
-	bool fail = !std::is_sorted(res, res+N, cmp_sortrec);
+	bool ok = std::is_sorted(res, res+N, cmp_sortrec);
 
-	printf("%s\n", fail ? "FAILED" : "OK");
+	printf("%s\n", ok ? "OK" : "FAILED");
 
 	if (verbose)
 		print_sortrec(res, N);
@@ -58,7 +63,7 @@ bool test_sortrec(bool verbose) {
 	delete[] src;
 	delete[] aux;
 
-	return fail;
+	return ok;
 }
 
 bool cmp_sortrec_ptr(const struct sortrec* a, const struct sortrec* b) {
@@ -89,9 +94,9 @@ bool test_sortrec_ptr(bool verbose) {
 
 	auto res = radix_sort(src, aux, N, kdf_sortrec_ptr);
 
-	bool fail = !std::is_sorted(res, res+N, cmp_sortrec_ptr);
+	bool ok = std::is_sorted(res, res+N, cmp_sortrec_ptr);
 
-	printf("%s\n", fail ? "FAILED" : "OK");
+	printf("%s\n", ok ? "OK" : "FAILED");
 
 	if (verbose)
 		print_sortrec_ptr(res, N);
@@ -99,7 +104,7 @@ bool test_sortrec_ptr(bool verbose) {
 	delete[] src;
 	delete[] aux;
 
-	return fail;
+	return ok;
 }
 
 void print_float(float *arr, size_t n) {
@@ -119,14 +124,14 @@ bool test_float(bool verbose) {
 
 	auto res = radix_sort(src, aux, N);
 
-	bool fail = !std::is_sorted(res, res+N);
+	bool ok = std::is_sorted(res, res+N);
 
-	printf("%s\n", fail ? "FAILED" : "OK");
+	printf("%s\n", ok ? "OK" : "FAILED");
 
 	if (verbose)
 		print_float(res, N);
 
-	return fail;
+	return ok;
 }
 
 auto kdf_int_reverse = [](const int& entry) -> int {
@@ -148,30 +153,30 @@ bool test_int(bool verbose) {
 
 	printf("Sorting int[%zu]... ", N);
 	auto res = radix_sort(src, aux, N);
-	bool fail = !std::is_sorted(res, res+N);
-	if (!fail) {
+	bool ok = std::is_sorted(res, res+N);
+	if (ok) {
 		printf("OK\n");
 		printf("Re-Sorting int[%zu] (reverse)... ", N);
 		res = radix_sort(res, aux, N, kdf_int_reverse);
-		fail = !std::is_sorted(res, res+N, std::greater<int>());
+		ok = std::is_sorted(res, res+N, std::greater<int>());
 	}
 
-	printf("%s\n", fail ? "FAILED" : "OK");
+	printf("%s\n", ok ? "OK" : "FAILED");
 
-	return fail;
+	return ok;
 }
 
 int main(int argc, char *argv[]) {
 	bool verbose = false;
 
-	bool failed =
-		test_sortrec(verbose) |
-		test_sortrec_ptr(verbose) |
-		test_float(verbose) |
+	bool passed =
+		test_sortrec(verbose) &
+		test_sortrec_ptr(verbose) &
+		test_float(verbose) &
 		test_int(verbose)
 	;
 
-	if (failed) {
+	if (!passed) {
 		fprintf(stderr, "Tests failed.\n");
 		return EXIT_FAILURE;
 	}
