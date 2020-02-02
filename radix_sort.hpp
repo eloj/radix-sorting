@@ -6,8 +6,10 @@
 
 	TODO:
 		Do away with shift-table (support any number of passes?)
-		Smarter deduction of kdf
+		Public templated KDFs, /w reverse alternatives (e.g kdf_reverse<int>() for easier client use.
 */
+#pragma once
+
 #include <array>
 #include <type_traits>
 #include <cinttypes>

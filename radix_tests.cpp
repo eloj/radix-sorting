@@ -163,6 +163,8 @@ bool test_int(bool verbose) {
 
 	printf("%s\n", ok ? "OK" : "FAILED");
 
+	delete[] src;
+
 	return ok;
 }
 
