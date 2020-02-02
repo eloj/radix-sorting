@@ -16,6 +16,8 @@ Unless otherwise specified, this code is written foremost to be clear and easy t
 
 All code is provided under the [MIT License](LICENSE).
 
+[![Build Status](https://travis-ci.org/eloj/radix-sorting.svg?branch=master)](https://travis-ci.org/eloj/radix-sorting)
+
 ## Table of Contents
 
 + [Motivation](#motivation)
