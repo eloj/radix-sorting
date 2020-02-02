@@ -1,6 +1,7 @@
 #include "radix_sort.hpp"
 
 #include <algorithm>
+#include <random>
 #include <cstdio>
 #include <cmath>
 
@@ -128,6 +129,37 @@ bool test_float(bool verbose) {
 	return fail;
 }
 
+auto kdf_int_reverse = [](const int& entry) -> int {
+	return ~(entry ^ 1UL << 31UL);
+};
+
+bool test_int(bool verbose) {
+	std::default_random_engine generator;
+	std::normal_distribution<double> distribution(std::numeric_limits<int>::min(), std::numeric_limits<int>::max());
+
+	size_t N = 50000;
+	int* src = new int[N*2];
+	int* aux = src + N;
+
+	for (size_t i=0 ; i < N ; ++i) {
+		double a = distribution(generator);
+		src[i] = int(a);
+	}
+
+	printf("Sorting int[%zu]... ", N);
+	auto res = radix_sort(src, aux, N);
+	bool fail = !std::is_sorted(res, res+N);
+	if (!fail) {
+		printf("OK\n");
+		printf("Re-Sorting int[%zu] (reverse)... ", N);
+		res = radix_sort(res, aux, N, kdf_int_reverse);
+		fail = !std::is_sorted(res, res+N, std::greater<int>());
+	}
+
+	printf("%s\n", fail ? "FAILED" : "OK");
+
+	return fail;
+}
 
 int main(int argc, char *argv[]) {
 	bool verbose = false;
@@ -135,7 +167,8 @@ int main(int argc, char *argv[]) {
 	bool failed =
 		test_sortrec(verbose) |
 		test_sortrec_ptr(verbose) |
-		test_float(verbose)
+		test_float(verbose) |
+		test_int(verbose)
 	;
 
 	if (failed) {
