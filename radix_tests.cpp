@@ -134,8 +134,8 @@ bool test_float(bool verbose) {
 	return ok;
 }
 
-auto kdf_int_reverse = [](const int& entry) -> int {
-	return ~(entry ^ 1UL << 31UL);
+auto kdf_int_reverse = [](const int& entry) -> unsigned int {
+	return ~(entry ^ (1UL << 31UL));
 };
 
 bool test_int(bool verbose) {
