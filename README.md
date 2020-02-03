@@ -703,8 +703,8 @@ when activated, but suffers from limited opportunity in practice due to the
 requirement that every input entry has the same value in the column. The
 higher the radix (wider column), the fewer opportunities for skipping.
 
-If we reduced the column width to one single bit, then any column where all
-the bits are 0s or 1s could be skipped, at the cost of having to do key-width
+If we reduced the column width to one single bit, then any column with
+all 0s or all 1s could be skipped, at the cost of having to do key-width
 number of passes worst-case.
 
 The insight here is that we only care about columns with mixed values, so we
