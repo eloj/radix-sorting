@@ -7,7 +7,7 @@ static void bitmap_sort_16(uint16_t *arr, uint64_t *bitmap, size_t n)
 {
 	// Mark integers as present in bitmap
 	for (size_t i = 0 ; i < n ; ++i) {
-		bitmap[arr[i] >> 6] |= (1L << (arr[i] & 63));
+		bitmap[arr[i] >> 6] |= (1UL << (arr[i] & 63));
 	}
 }
 
@@ -29,7 +29,7 @@ static void print_bitmap(const uint64_t *bitmap, size_t len) {
 
 int main(int argc, char *argv[]) {
 
-	size_t bitmap_len = (1L << 10); // = 2^16 / 2^6
+	size_t bitmap_len = (1UL << 10); // = 2^16 / 2^6
 	uint64_t bitmap[bitmap_len];
 	memset(bitmap, 0, sizeof(bitmap));
 

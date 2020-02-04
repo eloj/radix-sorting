@@ -86,7 +86,7 @@ and benchmark.
 ## <a name="counting-sort"></a> From the top; Counting sort
 
 Possibly the simplest way to sort an array of integers, is to simply count how many there are
-of each, and use those counts to write the result. We don't even have to compare elements.
+of each, and use those counts to write the result.
 
 This is the most basic [counting sort](https://en.wikipedia.org/wiki/Counting_sort).
 
@@ -119,13 +119,12 @@ integer. For 8- and 16-bit numbers this would amount to `2^8*4`=1KiB and `2^16*4
 
 Again, we're only sorting an array of integers, nothing more.
 
-As the wikipedia page explains, it's really the magnitude of the keys involved that matters. Some
+As the wikipedia page explains, it's really the maximum difference of the keys involved that matters. Some
 implementations can be seen scanning the input data to determine and allocate just enough entries to fit
 either `max(key) + 1`, or tighter, `max(key) - min(key) + 1` keys. However, unless you do this because you
 allocate memory on each sort call and just want to save some, you will most likely have to consider what to do
 if the input range is too wide to handle, which is not a good position to be in. In practice you would _never_
-want to fail on some inputs, which makes that type of implementation not very useful, unless you know that the
-range of input values will be limited.
+want to fail on some inputs, which makes that type of implementation not very useful.
 
 As presented, this sort is _in-place_, but since it's not moving any elements, it doesn't really make sense
 to think of it as being _stable_ or  _unstable_.
@@ -197,7 +196,7 @@ the next same-keyed entry is written just after.
 
 Because we are processing the input entries in order, from the lowest to the highest index, and preserving
 this order when we write them out, this sort is in essence _stable_. That said, it's a bit of a pointless distinction
-since we're treating each input entry, as a whole, as the key.
+since without any other data associated with the keys, there's nothing that distinguishes same keys from one other.
 
 With a few basic modifications, we arrive at:
 
@@ -240,8 +239,8 @@ here is arbitrary; it's only used to show that we're not restricted to sorting _
 The primary modification to the sorting function is the small addition of a function `key_of()`, which returns
 the key for a given record.
 
-The main insight you should take away from this is that if the things we're sorting aren't themselves the
-keys but some composed type, we just need some way to _extract_ or _derive_ a key for each entry instead.
+The main insight you should take away from this is that, to sort composed types, we just need some way to
+_extract_ or _derive_ a key for each entry.
 
 We're still restricted to integer keys. We rely on there being some sort of mapping from our records (or _entries_)
 to the integers which orders the records the way we require.
@@ -572,18 +571,18 @@ and reading the result backwards, which obviously will give you the _last_ like-
 ### <a name="signed-keys"></a>Signed integer keys
 
 To treat the key as a signed integer, we need to manipulate the sign-bit,
-since by default this is set for negative numbers, meaning they will appear
+since by default this is set for negative numbers, meaning they would appear
 at the end of the result. Using the [xor operator](https://en.wikipedia.org/wiki/Bitwise_operation#XOR) we flip the top bit, which
 neatly solves the problem:
 
 ```c
-	return key ^ (1L << 31); // signed 32-bit (asc)
+	return key ^ (1UL << 31); // signed 32-bit (asc)
 ```
 
 These can be combined to handle signed integers in descending order:
 
 ```c
-	return ~(key ^ (1L << 31)); // signed 32-bit (desc)
+	return ~(key ^ (1UL << 31)); // signed 32-bit (desc)
 ```
 
 ### <a name="float-keys"></a>Floating point keys
@@ -591,7 +590,7 @@ These can be combined to handle signed integers in descending order:
 To sort IEEE 754 single-precision (32-bit) floats (a.k.a [binary32](https://en.wikipedia.org/wiki/Single-precision_floating-point_format)) in their natural order we need to invert the key if the sign-bit is set, else we need to flip the sign bit. (via [Radix Tricks](http://stereopsis.com/radix.html)):
 
 ```c
-	return key ^ (-(key >> 31) | (1L << 31)); // 32-bit float (asc)
+	return key ^ (-(key >> 31) | (1UL << 31)); // 32-bit float (asc)
 ```
 
 This looks complex, but the left side of the parenthetical converts a set sign-bit to an all-set bitmask (-1 equals ~0) which causes the `xor` to
@@ -891,7 +890,7 @@ static void bitmap_sort_16(uint16_t *arr, uint64_t *bitmap, size_t n)
 {
 	// Mark integers as present in bitmap
 	for (size_t i = 0 ; i < n ; ++i) {
-		bitmap[arr[i] >> 6] |= (1L << (arr[i] & 63));
+		bitmap[arr[i] >> 6] |= (1UL << (arr[i] & 63));
 	}
 }
 ```
