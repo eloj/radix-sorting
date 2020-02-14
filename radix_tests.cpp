@@ -3,12 +3,14 @@
 
 	See https://github.com/eloj/radix-sorting
 */
-#include "radix_sort.hpp"
-
 #include <algorithm>
 #include <random>
 #include <cstdio>
 #include <cmath>
+#include <cassert>
+
+#include "radix_sort.hpp"
+#include "radix_sort_rank.hpp"
 
 struct sortrec {
 	uint8_t key;
@@ -66,11 +68,47 @@ bool test_sortrec(bool verbose) {
 	return ok;
 }
 
-bool cmp_sortrec_ptr(const struct sortrec* a, const struct sortrec* b) {
+bool test_rank_sortrec(bool verbose) {
+	size_t N = sizeof(source_arr)/sizeof(source_arr[0]);
+
+	// Allocate space for two indeces per entry to be sorted.
+	auto ib = new uint8_t[N*2];
+
+	printf("Rank sorting struct sortrec... ");
+
+	auto *ranks = radix_sort_rank(source_arr, ib, N, kdf_sortrec);
+
+	bool ok = true;
+	uint64_t bits = 0; // Used to verify all indeces are unique / valid permutation.
+	assert(N > 0 && N <= 64);
+	for (size_t i = 0 ; i < N ; ++i) {
+		bits |= (1ULL << ranks[i]);
+
+		if (i > 0 && source_arr[ranks[i]].key < source_arr[ranks[i-1]].key) {
+			ok = false;
+		}
+	}
+	ok = ok && __builtin_popcount(bits) == N;
+
+	printf("%s\n", ok ? "OK" : "FAILED");
+
+	if (verbose) {
+		for (size_t i = 0 ; i < N ; ++i) {
+			struct sortrec const *e = &source_arr[ranks[i]];
+			printf("%08zx: %08x (rank: %04x)\n", i, e->key, ranks[i]);
+		}
+	}
+
+	delete[] ib;
+
+	return ok;
+}
+
+bool cmp_sortrec_reverse_ptr(const struct sortrec* a, const struct sortrec* b) {
 	return a->key > b->key;
 }
 
-auto kdf_sortrec_ptr = [](const struct sortrec* entry) -> uint8_t {
+auto kdf_sortrec_reverse_ptr = [](const struct sortrec* entry) -> uint8_t {
 	return ~entry->key;
 };
 
@@ -92,9 +130,9 @@ bool test_sortrec_ptr(bool verbose) {
 		src[i] = &source_arr[i];
 	}
 
-	auto res = radix_sort(src, aux, N, kdf_sortrec_ptr);
+	auto res = radix_sort(src, aux, N, kdf_sortrec_reverse_ptr);
 
-	bool ok = std::is_sorted(res, res+N, cmp_sortrec_ptr);
+	bool ok = std::is_sorted(res, res+N, cmp_sortrec_reverse_ptr);
 
 	printf("%s\n", ok ? "OK" : "FAILED");
 
@@ -175,7 +213,8 @@ int main(int argc, char *argv[]) {
 		test_sortrec(verbose) &
 		test_sortrec_ptr(verbose) &
 		test_float(verbose) &
-		test_int(verbose)
+		test_int(verbose) &
+		test_rank_sortrec(verbose)
 	;
 
 	if (!passed) {

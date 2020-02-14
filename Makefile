@@ -61,6 +61,9 @@ radix: radix_experiment.cpp radix_sort.hpp
 radix_bench: radix_bench.cpp radix_sort.hpp
 	$(CXX) $(CXXFLAGS) $< -lbenchmark -pthread -o $@
 
+radix_tests: radix_tests.cpp radix_sort.hpp radix_sort_rank.hpp
+	$(CXX) $(CXXFLAGS) $< -o $@
+
 opt: clean
 	@echo -e ${YELLOW}Building with profile generation...${NC}
 	@LTO=1 PROFILEGEN=on make radix
