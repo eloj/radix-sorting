@@ -26,7 +26,7 @@ static void radix_sort_u32_multipass(struct sortrec *arr, struct sortrec *aux, s
 	for (i = 0 ; i < n ; ++i) {
 		uint32_t k = key_of(arr + i) >> keyshift;
 
-		uint8_t k0 = (k >> 0);
+		uint8_t k0 = (k >> 0) & 0xFF;
 		uint8_t k1 = (k >> 8) & 0xFF;
 		uint8_t k2 = (k >> 16) & 0xFF;
 		uint8_t k3 = (k >> 24) & 0xFF;
@@ -59,7 +59,8 @@ static void radix_sort_u32_multipass(struct sortrec *arr, struct sortrec *aux, s
 
 	// Sort in four passes from LSB to MSB
 	for (i = 0 ; i < n ; ++i) {
-		uint8_t k0 = key_of(arr + i) >> keyshift;
+		uint32_t k = key_of(arr + i) >> keyshift;
+		uint8_t k0 = (k >> 0) & 0xFF;
 		size_t dst = cnt0[k0]++;
 		aux[dst] = arr[i];
 	}

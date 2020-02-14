@@ -50,10 +50,10 @@ static uint32_t *radix_sort_u32_index(const struct sortrec * const arr, uint32_t
 	for (i = 0 ; i < n ; ++i) {
 		uint32_t k = key_of(arr + i);
 
-		uint8_t k0 = (k >> 0) & 0xFF;
-		uint8_t k1 = (k >> 8) & 0xFF;
-		uint8_t k2 = (k >> 16) & 0xFF;
-		uint8_t k3 = (k >> 24) & 0xFF;
+		uint8_t k0 = k;
+		uint8_t k1 = (k >> 8);
+		uint8_t k2 = (k >> 16);
+		uint8_t k3 = (k >> 24);
 
 		++cnt0[k0];
 		++cnt1[k1];
@@ -112,7 +112,7 @@ static uint32_t *radix_sort_u32_index(const struct sortrec * const arr, uint32_t
 static void print_array_rec(const struct sortrec * const arr, const char *names[], uint32_t *indeces, size_t n) {
 	for (size_t i = 0 ; i < n ; ++i) {
 		struct sortrec const *e = &arr[indeces[i]];
-		printf("%08zx: %08x (rank: %04x) -> %s\n", i, key_of(e), indeces[i], names[indeces[i]]);
+		printf("%08zx (was %04x): %08x -> %s\n", i, indeces[i], key_of(e), names[indeces[i]]);
 	}
 }
 
