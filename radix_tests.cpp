@@ -148,7 +148,7 @@ bool test_sortrec_ptr(bool verbose) {
 void print_float(float *arr, size_t n) {
 	uint32_t local;
 	for (size_t i = 0 ; i < n ; ++i) {
-		memcpy(&local, arr+i, sizeof(local));
+		std::memcpy(&local, arr+i, sizeof(local));
 		printf("%08zx: %08x %f\n", i, local, arr[i]);
 	}
 }

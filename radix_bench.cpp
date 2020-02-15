@@ -56,7 +56,7 @@ public:
 		if (n <= max_n) {
 			this->src = new T[n];
 			this->aux = new T[n];
-			memcpy(this->src, org_data, sizeof(T) * n);
+			std::memcpy(this->src, org_data, sizeof(T) * n);
 		}
 	}
 
