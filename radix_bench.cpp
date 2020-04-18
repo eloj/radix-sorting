@@ -9,6 +9,7 @@
 
 #include <benchmark/benchmark.h>
 #include "radix_sort.hpp"
+#include "radix_sort_rank.hpp"
 
 static void* read_file(const char *filename, size_t *limit) {
 	void *keys = NULL;
@@ -56,6 +57,7 @@ public:
 		if (n <= max_n) {
 			this->src = new T[n];
 			this->aux = new T[n];
+			this->aux_rank = new uint32_t[n*2];
 			std::memcpy(this->src, org_data, sizeof(T) * n);
 		}
 	}
@@ -63,7 +65,8 @@ public:
 	void TearDown(const ::benchmark::State& state) {
 		delete[](this->src);
 		delete[](this->aux);
-		this->src = this->aux = NULL;
+		delete[](this->aux_rank);
+		this->src = this->aux = this->aux_rank = NULL;
 	}
 
 	void UpdateCounters(::benchmark::State &state) {
@@ -74,6 +77,7 @@ public:
 
 	T *src;
 	T *aux;
+	uint32_t *aux_rank;
 	size_t n;
 	size_t max_n;
 };
@@ -86,6 +90,18 @@ BENCHMARK_DEFINE_F(FSu32, radix_sort)(benchmark::State &state) {
 		state.SkipWithError("Not enough source data to benchmark!");
 	for (auto _ : state) {
 		auto *sorted = radix_sort(src, aux, n);
+	}
+	UpdateCounters(state);
+}
+
+BENCHMARK_DEFINE_F(FSu32, radix_sort_rank)(benchmark::State &state) {
+	if (n > max_n)
+		state.SkipWithError("Not enough source data to benchmark!");
+	auto kf_unsigned = [](const FSu32::value_type& entry) -> FSu32::value_type {
+			return entry;
+	};
+	for (auto _ : state) {
+		auto *sorted_ranks = radix_sort_rank(src, aux_rank, n, kf_unsigned);
 	}
 	UpdateCounters(state);
 }
@@ -119,5 +135,6 @@ BENCHMARK_DEFINE_F(FSu32, QSort)(benchmark::State &state) {
 BENCHMARK_REGISTER_F(FSu32, radix_sort)->RangeMultiplier(10)->Range(1, 40000000);
 BENCHMARK_REGISTER_F(FSu32, StdSort)->RangeMultiplier(10)->Range(1, 40000000);
 BENCHMARK_REGISTER_F(FSu32, QSort)->RangeMultiplier(10)->Range(1, 40000000);
+BENCHMARK_REGISTER_F(FSu32, radix_sort_rank)->RangeMultiplier(10)->Range(1, 40000000);
 
 BENCHMARK_MAIN();

@@ -69,6 +69,8 @@ IdxType* rs_sort_rank(const T* RESTRICT src, IdxType* RESTRICT index_buffer, siz
 		for (size_t j = 0 ; j < n ; ++j) {
 			auto k = src[j];
 			size_t dst = histogram[(hist_len*cols[i]) + ((kf(k) >> shift_table[cols[i]]) & 0xFF)]++;
+			// PERF: This incurs an extra memory read compared to the non-ranked version. Getting around
+			// this would require us to rewrite the input such that the key and the index share a cache-line.
 			index_buffer_dst[dst] = index_buffer_src[j];
 		}
 		std::swap(index_buffer_src, index_buffer_dst);
