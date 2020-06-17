@@ -481,7 +481,7 @@ and because we can have multiple pointer arrays representing different sort orde
 
 An alternative is to sort using indeces instead. You can think of it as assigning
 a number between `0` and `N-1` to each object to be sorted, and then returning a permutation
-of these numbers that represents the sorted order.
+of these numbers that represents the sorted order. Some know this by the name _argsort_.
 
 Example: Take as input the array `A = { 2, 42, 1 }`. Assuming zero-based indexing, the rank-array representing
 an ascending sort of the input is `R = { 2, 0, 1 }`. I.e `{ A[R[0]], A[R[1]], A[R[2]], ... A[R[N-1]]}` = `{ 1, 2, 42, ... }`
@@ -599,7 +599,7 @@ otherwise ensures that the `xor` flips the sign-bit only.
 
 As an implementation detail for C and C++, `key` is the floating point key reinterpreted as an unsigned 32-bit integer to allow
 the bit-manipulation. This sort of _type-punning_, if done naively, can be considered _undefined behaviour_ (UB). Post C++20 you should
-have to option to use `bit_cast<T>()` to do this in a well-defined way, but without that option we instead use `memcpy` into a local
+have the option to use `bit_cast<T>()` to do this in a well-defined way, but without that option we instead use `memcpy` into a local
 temporary. This pattern is recognized by compilers, but as always you should inspect the generated code to make sure.
 
 Example for sorting `{ 128.0f, 646464.0f, 0.0f, -0.0f, -0.5f, 0.5f, -128.0f, -INFINITY, NAN, INFINITY }`:
