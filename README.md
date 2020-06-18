@@ -526,7 +526,9 @@ In the first pass we read the input in order and write out indeces in the correc
 the indeces buffer. In subsequent passes we alternate reading via, and writing the indeces buffers.
 
 As with sorting via pointers, the extra indirection from looking up the key via the indeces array is
-likely to have negative implications for performance. We'll revisit this issue at a later date.
+likely to have _quite_ negative implications for performance due to the added data-dependency.
+[There are solutions to this](http://www.codercorner.com/blog/wp-content/uploads/2018/03/radixredux.pdf),
+which we'll have to revisit here at a later date.
 
 On the plus side, we have now decoupled the size of the auxiliary buffer(s) from the size of
 the objects in the input array. Yes, we need to allocate a buffer twice the _length_ of that
@@ -928,5 +930,6 @@ section 1.2, and his Dr.Dobb's column [Algorithm Alley](http://www.drdobbs.com/a
 ## <a name="resources"></a> Resources
 
 * Pierre Terdiman, "[Radix Sort Revisited](http://codercorner.com/RadixSortRevisited.htm)", 2000.
+* Pierre Terdiman, "[Radix Redux](http://www.codercorner.com/blog/wp-content/uploads/2018/03/radixredux.pdf)", 2008 (PDF).
 * Michael Herf, "[Radix Tricks](http://stereopsis.com/radix.html), 2001.
 
