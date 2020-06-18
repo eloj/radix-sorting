@@ -82,7 +82,7 @@ T* rs_sort_main(T* RESTRICT src, T* RESTRICT aux, size_t n, Hist& histogram, Key
 		for (size_t j = 0 ; j < n ; ++j) {
 			auto k = src[j];
 			size_t dst = histogram[(hist_len*cols[i]) + ((kf(k) >> shift_table[cols[i]]) & 0xFF)]++;
-			aux[dst] = k;
+			aux[dst] = std::move(k);
 		}
 		std::swap(src, aux);
 	}
