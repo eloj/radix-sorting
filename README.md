@@ -824,25 +824,34 @@ By default we build an executable called `radix`. This is a test harness of sort
 to let you test different setups.
 
 ```bash
+$ ./radix
+Usage: ./radix <count> [<use_mmap> <use_huge> <uint8_t|uint16_t|uint32_t|uint64_t|int32_t|int64_t|float|double> <hex-mask>]
+```
+
+The first argument is the number of integers to sort (from `40M_32bit_keys.dat`), with zero
+meaning all:
+
+```bash
 $ ./radix 0
 ```
 
-Run with default options. The argument is the number of integers to sort (from `40M_32bit_keys.dat`), with zero
-meaning all.
+To sort all the available data as unsigned 16-bit integers using `mmap` for memory allocation, and forcing a column skip:
 
 ```bash
-$ ./radix 0 1 0 0x00ffffff
+$ ./radix 0 1 0 uint16_t 0x00ff
 ```
 
-The second argument is a flag controlling the use of `mmap` to map the input file and allocate memory.
+The second argument is a flag controlling the use of `mmap` to map the input file and allocate memory. Defaults to `0`.
 
 The third argument is a flag that controls the use of [hugepages](https://www.kernel.org/doc/Documentation/vm/hugetlbpage.txt),
 i.e very large memory pages. The presence of this feature is not guaranteed, and allocation may fail on some systems when
-used in combination with `mmap`.
+used in combination with `mmap`. Defaults to `0`.
 
-The fourth argument is a mask expressed in hexadecimal that will be bitwise `AND`-ed against the input before it's
+The fourth argument is the `type`, i.e, what the interpret the input file as. Defaults to `uint32_t`.
+
+The fifth argument is a mask expressed in hexadecimal that will be bitwise `AND`-ed against the input before it's
 sorted. This can be used to demonstrate the column-skipping functionality, e.g by passing 0x00FFFFFF the MSD column
-should be skipped.
+should be skipped. Defaults to no masking.
 
 ### <a name="cpp-benchmark"></a> Benchmarks
 
@@ -868,8 +877,8 @@ about that the benchmark can be easily updated to move the aux buffer allocation
 In practice, repeated allocation and deallocation of the same-sized block is likely to be immaterial,
 especially when there is little other pressure on the memory allocator during the benchmark.
 
-Because we're sorting random data, the column-skipping optimization is very unlikely to kick in, so while
-the benchmark is realistic, it is by no means a best-case scenario.
+Because we're sorting random data, the column-skipping optimization and pre-sorted detection is extremely
+unlikely to kick in, so while the benchmark is realistic, it is by no means a best-case scenario.
 
 ## <a name="esoterics"></a> Esoterics
 
