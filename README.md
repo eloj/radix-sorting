@@ -717,18 +717,24 @@ However, this gives rise to the following idea; we should be able to re-arrange
 the bit-columns in the key, as long as we preserve the relative order of the
 underlying sort keys, such that we maximize opportunity for column skipping.
 
-In other words, if we know which 1-bit columns are irrelevant, i.e those which
-are all the same bit-value, then we could use our key-derivation function
-to partition the key such that all relevant columns move to towards the LSB,
-and all irrelevant towards the MSB, and as long as we preserve the relative
-order of _relevant columns_, this should create opportunity for a wider radix
-to skip columns at the MSB end of the key.
+In other words, if we know which 1-bit columns are relevant, i.e those which
+are not all the same bit-value, then we could partition the keys such that all
+relevant columns move to towards the LSB, and all irrelevant towards the MSB,
+and as long as we preserve the relative order of _relevant columns_, this should
+create opportunity for a wider radix to skip columns at the MSB end of the key.
 
-In essence, our derived key now consists only of those key bits that are relevant.
+Calculating a mask of which columns are relevant can be done efficiently in one pass
+using simple bit-operations. We already do this pass to generate histograms, so no
+performance is lost here.
 
-While detecting which columns are relevant can be done efficiently in one
-pass with simple bit-operations, it's not immediately obvious how the partitioning
-step of key compaction can be done efficiently in software. This is an active area of research.
+The mask can then be used together with a parallel bit-extraction instruction,
+where available, to pack the keys. On AMD64 this instruction is called `PEXT`
+and is part of the [BMI2 instruction set](https://en.wikipedia.org/wiki/Bit_manipulation_instruction_set#BMI2_(Bit_Manipulation_Instruction_Set_2)).
+
+The mask will also tell us the maximum amount of bit compaction that can be achieved,
+and so we can decide to skip it if it wouldn't expose any whole radix-N columns.
+
+This is an active area of research.
 
 ### <a name="histogram-memory"></a> Histogram memory
 
