@@ -1,3 +1,11 @@
+/*
+	WORK IN PROGRESS: C++ implementation of a 8xW-bit rank radix sort
+	WARNING: DO NOT USE IN PRODUCTION CODE. #lol
+
+	See https://github.com/eloj/radix-sorting#by-rank
+
+	PERF: This is _much_ slower than the non-ranked implementation!
+*/
 #pragma once
 
 #include <array>
