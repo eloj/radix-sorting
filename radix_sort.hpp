@@ -92,10 +92,8 @@ T* rs_sort_main(T* RESTRICT src, T* RESTRICT aux, size_t n, Hist& histogram, Key
 
 // Helper template to return an unsigned T with the MSB set.
 template<typename T>
-constexpr typename std::make_unsigned<T>::type highbit(void) {
-	typedef typename std::make_unsigned<T>::type UT;
-	UT a = ((UT)-1) ^ (((UT)-1) >> 1);
-	return a;
+constexpr typename std::make_unsigned_t<T> highbit(void) {
+	return 1ULL << ((sizeof(T) << 3) - 1);
 }
 
 // This version is for automatically selecting the smallest
