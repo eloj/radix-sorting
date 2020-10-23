@@ -191,9 +191,9 @@ auto test_radix_sort(const char *filename, size_t entries, int use_mmap, int use
 		for (size_t i=0 ; i < n ; ++i) {
 			// src[i] &= value_mask;
 			uint64_t buf;
-			memcpy(&buf, src + i, sizeof(T));
+			std::memcpy(&buf, src + i, sizeof(T));
 			buf &= value_mask;
-			memcpy(src + i, &buf, sizeof(T));
+			std::memcpy(src + i, &buf, sizeof(T));
 		}
 	}
 
