@@ -26,7 +26,7 @@
 // Hist is storage for the histograms, sized to 256*passes*sizeof(counter-type)
 // KeyType is derived from the return value of the KeyFunc (an unsigned integer)
 //
-template<typename T, typename KeyFunc, typename Hist, typename KeyType=typename std::result_of<KeyFunc(T)>::type>
+template<typename T, typename KeyFunc, typename Hist, typename KeyType=typename std::result_of_t<KeyFunc(T)>>
 T* rs_sort_main(T* RESTRICT src, T* RESTRICT aux, size_t n, Hist& histogram, KeyFunc && kf) {
 	typedef typename Hist::value_type HVT;
 	static_assert(sizeof(KeyType) <= 8, "KeyType must be 64-bits or less");
@@ -101,7 +101,7 @@ constexpr typename std::make_unsigned<T>::type highbit(void) {
 // This version is for automatically selecting the smallest
 // possible counter data-type for the histograms.
 // Histograms stored on stack (2KiB-16KiB).
-template<typename T, typename KeyFunc, int passes = sizeof(typename std::result_of<KeyFunc(T)>::type)>
+template<typename T, typename KeyFunc, int passes = sizeof(typename std::result_of_t<KeyFunc(T)>)>
 T* radix_sort(T* RESTRICT src, T* RESTRICT aux, size_t n, KeyFunc && kf) {
 	if (n < 2) {
 		return src;
