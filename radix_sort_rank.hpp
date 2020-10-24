@@ -13,10 +13,14 @@
 #include <cinttypes>
 #include <cstring> // for std::memcpy
 
-#define RESTRICT __restrict__
+#include "radix_sort_basic_kdf.hpp"
 
-template<typename T, typename KeyFunc, typename Hist, typename IdxType = size_t, typename KeyType=typename std::result_of<KeyFunc(T)>::type>
-IdxType* rs_sort_rank(const T* RESTRICT src, IdxType* RESTRICT index_buffer, size_t n, Hist& histogram, KeyFunc && kf) {
+#ifndef RESTRICT
+#define RESTRICT __restrict__
+#endif
+
+template<typename T, typename KeyFunc = decltype(basic_kdfs::kdf<T>), typename Hist, typename IdxType = size_t, typename KeyType=typename std::result_of_t<KeyFunc&&(T)>>
+IdxType* rs_sort_rank(const T* RESTRICT src, IdxType* RESTRICT index_buffer, size_t n, Hist& histogram, KeyFunc && kf = basic_kdfs::kdf) {
 	typedef typename Hist::value_type HVT;
 	static_assert(sizeof(KeyType) <= 8, "KeyType must be 64-bits or less");
 	static_assert(std::is_unsigned<KeyType>(), "KeyType must be unsigned");
@@ -90,8 +94,8 @@ IdxType* rs_sort_rank(const T* RESTRICT src, IdxType* RESTRICT index_buffer, siz
 // This version is for automatically selecting the smallest
 // possible counter data-type for the histograms.
 // Histograms stored on stack (2KiB-16KiB).
-template<typename T, typename IdxType, typename KeyFunc, int passes = sizeof(typename std::result_of<KeyFunc(T)>::type)>
-IdxType* radix_sort_rank(const T* RESTRICT src, IdxType* RESTRICT index_buffer, size_t n, KeyFunc && kf) {
+template<typename T, typename IdxType, typename KeyFunc = decltype(basic_kdfs::kdf<T>), int passes = sizeof(typename std::result_of_t<KeyFunc&&(T)>)>
+IdxType* radix_sort_rank(const T* RESTRICT src, IdxType* RESTRICT index_buffer, size_t n, KeyFunc && kf = basic_kdfs::kdf) {
 	if (n < 256) {
 		std::array<uint8_t,256*passes> histogram{0};
 		return rs_sort_rank(src, index_buffer, n, histogram, kf);

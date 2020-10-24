@@ -88,7 +88,7 @@ bool test_rank_sortrec(bool verbose) {
 			ok = false;
 		}
 	}
-	ok = ok && __builtin_popcount(bits) == N;
+	ok = ok && (size_t)__builtin_popcountl(bits) == N;
 
 	printf("%s\n", ok ? "OK" : "FAILED");
 
