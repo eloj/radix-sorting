@@ -761,8 +761,9 @@ That said, it's hard to imagine a scenario where this would be a win on a typica
 
 Using multiples of eight bits for the radix is convenient, but not required. If we do,
 we limit ourselves to 8-bit or 16-bit wide radixes in practice. Using an intermediate size
-such as 11-bits with three passes saves us one pass for every 32-bits of key, but also makes
-it less likely for the column skipping to kick in, and adds a few extra masking operations.
+such as 11-bits with three passes saves us one pass for every 32-bits of key and may
+fit a low-level cache (L1/L2) better, but also makes it less likely for the column skipping
+to kick in, and adds a few extra masking operations.
 
 Going narrower could allow us to skip more columns in common workloads. There's definitely
 room for experimentation in this area, maybe even trying non-uniformly wide radixes (8-16-8) or
@@ -778,7 +779,8 @@ I'm confident saying it is not.
 
 The 11-bit version on the other hand was surprisingly bad, and was never even close to beating
 the standard 8-bit radix implementation, even when reducing the counter width down to 32-bits
-to compensate for the larger number of buckets.
+to compensate for the larger number of buckets. My current interpretation is that pushing up
+the L1D cache use for histograms is actually detrimental to overall performance.
 
 There is perhaps a world with bigger caches and faster memory where going wider is better,
 but for now it seems eight bits reigns supreme.
@@ -855,7 +857,7 @@ The third argument is a flag that controls the use of [hugepages](https://www.ke
 i.e very large memory pages. The presence of this feature is not guaranteed, and allocation may fail on some systems when
 used in combination with `mmap`. Defaults to `0`.
 
-The fourth argument is the `type`, i.e, what the interpret the input file as. Defaults to `uint32_t`.
+The fourth argument is the `type`, i.e, what type to interpret the input file as an array of. Defaults to `uint32_t`.
 
 The fifth argument is a mask expressed in hexadecimal that will be bitwise `AND`-ed against the input before it's
 sorted. This can be used to demonstrate the column-skipping functionality, e.g by passing 0x00FFFFFF the MSD column
