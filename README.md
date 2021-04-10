@@ -697,7 +697,7 @@ to the result, rather than add a copy step.
 
 ### <a name="key-compaction"></a >Key compaction
 
-_This section is under development, speculative, and has not been implemented_
+_This section is [under development](https://github.com/eloj/binary-search-kdf), speculative, and has not been implemented_
 
 The opportunity for column-skipping is fast and easy to detect, and efficient
 when activated, but suffers from limited opportunity in practice due to the
