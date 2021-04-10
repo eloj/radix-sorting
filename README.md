@@ -697,7 +697,7 @@ to the result, rather than add a copy step.
 
 ### <a name="key-compaction"></a >Key compaction
 
-_This section is [under development](https://github.com/eloj/binary-search-kdf), speculative, and has not been implemented_
+_This section is [under development](https://github.com/eloj/binary-search-kdf#related-work), speculative, and has not been implemented_
 
 The opportunity for column-skipping is fast and easy to detect, and efficient
 when activated, but suffers from limited opportunity in practice due to the
@@ -724,17 +724,20 @@ and as long as we preserve the relative order of _relevant columns_, this should
 create opportunity for a wider radix to skip columns at the MSB end of the key.
 
 Calculating a mask of which columns are relevant can be done efficiently in one pass
-using simple bit-operations. We already do this pass to generate histograms, so no
+using simple bit-operations. We already do this pass to generate histograms, so little
 performance is lost here.
 
-The mask can then be used together with a parallel bit-extraction instruction,
+The mask tells us the maximum amount of bit-compaction that can be achieved,
+and so we can decide to skip it if it wouldn't expose any whole radix-N columns.
+
+One basic first approach would be to use the mask to shift out/ignore low bits that
+are the same, as long as we can shift enough that a full column becomes available for skipping.
+
+More optimally, the mask can be used together with a parallel bit-extraction instruction,
 where available, to pack the keys. On AMD64 this instruction is called `PEXT`
 and is part of the [BMI2 instruction set](https://en.wikipedia.org/wiki/Bit_manipulation_instruction_set#BMI2_(Bit_Manipulation_Instruction_Set_2)).
 
-The mask will also tell us the maximum amount of bit compaction that can be achieved,
-and so we can decide to skip it if it wouldn't expose any whole radix-N columns.
-
-This is an active area of research.
+This is an active [area of research](https://github.com/eloj/binary-search-kdf/blob/master/relbits.cpp).
 
 ### <a name="histogram-memory"></a> Histogram memory
 
@@ -779,8 +782,8 @@ I'm confident saying it is not.
 
 The 11-bit version on the other hand was surprisingly bad, and was never even close to beating
 the standard 8-bit radix implementation, even when reducing the counter width down to 32-bits
-to compensate for the larger number of buckets. My current interpretation is that pushing up
-the L1D cache use for histograms is actually detrimental to overall performance.
+to compensate for the larger number of buckets. My current interpretation is that increasing
+L1D cache pressure with larger histograms is actually detrimental to overall performance.
 
 There is perhaps a world with bigger caches and faster memory where going wider is better,
 but for now it seems eight bits reigns supreme.
