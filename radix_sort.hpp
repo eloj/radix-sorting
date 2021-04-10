@@ -12,7 +12,6 @@
 #pragma once
 
 #include <array>
-#include <type_traits>
 #include <cinttypes>
 #include <cstring> // for std::memcpy
 
