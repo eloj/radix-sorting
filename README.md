@@ -667,13 +667,30 @@ histogram loop.
 
 ### <a name="column-skipping"></a >Column skipping
 
-If every key radix for a column has the same value, then the sort loop for that column will
+If every key has the same value for a key-radix aligned portion, then the sort loop for that key portion will
 simply be a copy from one buffer to another, which is a waste.
 
-Fortunately detecting this is easy, you don't even have to scan through the
-histograms. Simply sample the key of the first element. If any of its radixes has
-a histogram count equal to the total number of entries to sort, that column can be
-skipped.
+Fortunately detecting this is easy, and does NOT -- as is sometimes shown -- require a loop over the
+histogram _looking_ for a non-zero count and checking if it's equal the number of keys being sorted.
+
+Instead we can simply _sample any key_, and check the corresponding histogram entries directly.
+
+![Diagram: Column skipping via sampling](data/colskip.svg)
+
+We have some example input keys: 341, 042 and 344. The middle digit in all
+of these is the same, four (4), so that column does not need to processed. How do we determine this?
+
+We take the first key (any will do), extract all the subkeys using whatever key-radix we're using,
+and then we _directly probe_ those entries in the histogram(s). No searching required.
+
+Iff the corresponding count is equal to the number of keys to be sorted, all the values in
+the column are the same and it can be skipped.
+
+As is clear from this diagram, the middle digit of the sampled key directly indexes to position 4
+in the histogram. The corresponding middle-digit count is three, equal to the number of keys.
+Therefore is can be skipped. This is not true for the other parts, so they can not be skipped.
+
+Notice how you could sample _any_ key, and the result would be the same.
 
 ```c
 	int cols[4];
