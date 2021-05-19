@@ -1,0 +1,24 @@
+digraph structs {
+	rankdir=TB;
+	node [shape=record,width=1.0,height=.1];
+
+	// 341, 042, 344
+
+	keys [label="{Input|{<k0>341|042|344|..}}"];
+
+	key0 [label="{<label>Sampled key|{<k2>3|<k1>4|<k0>1}}"];
+
+	hist [label="{ Histogram |
+		{<h0>0:|1|0|0} |
+		{<h1>1:|0|0|𝟭} |
+		{<h2>2:|0|0|1} |
+		{<h3>3:|𝟮|0|0} |
+		{<h4>4:|0|𝟯|1} |
+		{..| | | }}"];
+
+	keys:k0 -> key0:label:n;
+
+	key0:k2 -> hist:h3:w;
+	key0:k1 -> hist:h4:w;
+	key0:k0 -> hist:h1:w;
+}
