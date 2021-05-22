@@ -4,21 +4,37 @@ digraph structs {
 
 	// 341, 042, 344
 
-	keys [label="{Input|{<k0>341|042|344|..}}"];
+	keys [label="{Input|<k0>341|042|344}"];
 
 	key0 [label="{<label>Sampled key|{<k2>3|<k1>4|<k0>1}}"];
 
-	hist [label="{ Histogram |
-		{<h0>0:|1|0|0} |
-		{<h1>1:|0|0|𝟭} |
-		{<h2>2:|0|0|1} |
-		{<h3>3:|𝟮|0|0} |
-		{<h4>4:|0|𝟯|1} |
-		{..| | | }}"];
+	hist0 [label="{ Histogram 0 |
+		{0:|0} |
+		{<cnt>1:|1} |
+		{2:|1} |
+		{3:|0} |
+		{4:|1} |
+		{..| }}"];
+
+	hist1 [label="{ Histogram 1 |
+		{0:|0} |
+		{1:|0} |
+		{2:|0} |
+		{3:|0} |
+		{<cnt>4:|𝟯} |
+		{..| }}"];
+
+	hist2 [label="{ Histogram 2 |
+		{0:|1} |
+		{1:|0} |
+		{2:|0} |
+		{<cnt>3:|2} |
+		{4:|0} |
+		{..| }}"];
 
 	keys:k0 -> key0:label:n;
 
-	key0:k2 -> hist:h3:w;
-	key0:k1 -> hist:h4:w;
-	key0:k0 -> hist:h1:w;
+	key0:k2 -> hist2:cnt:w;
+	key0:k1 -> hist1:cnt:w;
+	key0:k0 -> hist0:cnt:w;
 }
