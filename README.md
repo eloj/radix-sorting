@@ -667,28 +667,21 @@ histogram loop.
 
 ### <a name="column-skipping"></a >Column skipping
 
-If every key has the same value for a key-radix aligned portion, then the sort loop for that key portion will
+If every key has the same value for a key-radix aligned portion, then the sort loop for that column will
 simply be a copy from one buffer to another, which is a waste.
 
-Fortunately detecting this is easy, and does NOT -- as is sometimes shown -- require a loop over the
+Fortunately detecting this is easy, and does not -- as is sometimes shown -- require a loop over the
 histogram _looking_ for a non-zero count and checking if it's equal the number of keys being sorted.
 
 Instead we can simply _sample any key_, and check the corresponding histogram entries directly.
 
 ![Diagram: Column skipping via sampling](data/colskip.svg)
 
-We have some example input keys: 341, 042 and 344. The middle digit in all
-of these is the same, four (4), so that column does not need to processed. How do we determine this?
-
 We take the first key (any will do), extract all the subkeys using whatever key-radix we're using,
 and then we _directly probe_ those entries in the histogram(s). No searching required.
 
 Iff the corresponding count is equal to the number of keys to be sorted, all the values in
 the column are the same and it can be skipped.
-
-As is clear from this diagram, the middle digit of the sampled key directly indexes to position 4
-in the histogram. The corresponding middle-digit count is three, equal to the number of keys.
-Therefore is can be skipped. This is not true for the other parts, so they can not be skipped.
 
 Notice how you could sample _any_ key, and the result would be the same.
 
@@ -706,6 +699,9 @@ Notice how you could sample _any_ key, and the result would be the same.
 	[...]
 	// .. here the cols array contains the index of the ncols columns we must process.
 ```
+
+Unlikely to be a win in the common case, but as a potential micro-optimization you could `xor` any
+two keys and ignore histograms for which the combined bits are not all zero.
 
 Skipping columns has the side-effect of the final sorted result ending up in either the
 original input buffer or the auxiliary buffer, depending on whether you sorted an even
