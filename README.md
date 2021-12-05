@@ -10,7 +10,8 @@ These are my notes on engineering a [radix sort](https://en.wikipedia.org/wiki/R
 
 The ideas behind radix sorting are not new in any way, but seems to have become,
 if not forgotten, so at least under-utilized, as over the years _quicksort_ became
-the [go-to](https://cs.stackexchange.com/questions/3/why-is-quicksort-better-than-other-sorting-algorithms-in-practice) "default" sorting algorithm.
+the [go-to](https://cs.stackexchange.com/questions/3/why-is-quicksort-better-than-other-sorting-algorithms-in-practice) "default" sorting algorithm
+for [internal sorting](https://en.wikipedia.org/wiki/Internal_sort).
 
 Unless otherwise specified, this code is written foremost to be clear and easy to understand.
 
@@ -115,16 +116,17 @@ static void counting_sort_8(uint8_t *arr, size_t n)
 You could easily extend this code to work with 16-bit values, but if you try to push much further the drawbacks
 of this counting sort become fairly obvious; you need a location to store the count for each unique
 integer. For 8- and 16-bit numbers this would amount to `2^8*4`=1KiB and `2^16*4`=256KiB of memory. For
-32-bit integers, it'd require `2^32*4`=16GiB of memory. Multiply by two if you need 64- instead of 32-bit counters.
+32-bit integers, it'd require `2^32*4`=16GiB of memory[^footcntsize]. Multiply by two if you need 64- instead of 32-bit counters.
 
-Again, we're only sorting an array of integers, nothing more.
+Again, we're only sorting an array of integers, nothing more. It's not immediately obvious how we could
+use this to sort records with multiple pieces of data.
 
-As the wikipedia page explains, it's really the maximum difference of the keys involved that matters. Some
-implementations can be seen scanning the input data to determine and allocate just enough entries to fit
-either `max(key) + 1`, or tighter, `max(key) - min(key) + 1` keys. However, unless you do this because you
-allocate memory on each sort call and just want to save some, you will most likely have to consider what to do
-if the input range is too wide to handle, which is not a good position to be in. In practice you would _never_
-want to fail on some inputs, which makes that type of implementation not very useful.
+[^footcntsize]: As the wikipedia page explains, it's really the maximum difference of the keys involved that matters.
+  Some implementations can be seen scanning the input data to determine and allocate just enough entries to fit
+  either `max(key) + 1`, or tighter, `max(key) - min(key) + 1` keys. However, unless you do this because you
+  allocate memory on each sort call and just want to save some, you will most likely have to consider what to do
+  if the input range is too wide to handle, which is not a good position to be in. In practice you would _never_
+  want to fail on some inputs, which makes that type of implementation not very useful.
 
 As presented, this sort is _in-place_, but since it's not moving any elements, it doesn't really make sense
 to think of it as being _stable_ or  _unstable_.
@@ -132,7 +134,7 @@ to think of it as being _stable_ or  _unstable_.
 An [in-place sort](https://en.wikipedia.org/wiki/In-place_algorithm) is a sorting algorithm where the amount of
 extra memory used does not depend on the size of the input.
 
-A [stable sort](https://en.wikipedia.org/wiki/Sorting_algorithm#Stability) is one where records with like keys keep
+A [stable sort](https://en.wikipedia.org/wiki/Sorting_algorithm#Stability) is one where records with equal keys keep
 their relative position in the sorted output.
 
 To get us closer to radix sorting, we now need to consider a slightly more general variant where we're, at
@@ -239,15 +241,15 @@ here is arbitrary; it's only used to show that we're not restricted to sorting _
 The primary modification to the sorting function is the small addition of a function `key_of()`, which returns
 the key for a given record.
 
-The main insight you should take away from this is that, to sort composed types, we just need some way to
+The main insight you should take away from this is that, to sort record types, we just need some way to
 _extract_ or _derive_ a key for each entry.
 
 We're still restricted to integer keys. We rely on there being some sort of mapping from our records (or _entries_)
 to the integers which orders the records the way we require.
 
 Here we still use a single octet inside the `struct sortrec` as the key. Associated with each key
-is a short string. This allows us to demonstrate *a)* that sorting keys with associated data is not a problem,
-and *b)* that the sort is indeed stable.
+is a short string. This allows us to demonstrate that *a)* sorting keys with associated data is not a problem,
+and *b)* the sort is indeed stable.
 
 Running the full program demonstrates that each _like-key_ is output in the same order it came in the
 input array, i.e the sort is _stable_.
@@ -784,7 +786,8 @@ to kick in, and adds a few extra masking operations.
 Going narrower could allow us to skip more columns in common workloads. There's definitely
 room for experimentation in this area, maybe even trying non-uniformly wide radixes (8-16-8) or
 dynamic selection of radix widths. If the data you're sorting isn't random, adapting the
-radix to the data may yield positive results.
+radix to the data may yield positive results, e.g if you know you are sorting floats in
+the range -1 to +1, or only care about a certain number of bits of precision, then this may be exploitable.
 
 That said, in my limited initial testing, neither 4- nor 11-bit wide radix showed any promise
 at all in sorting _random_ 32-bit integers. Quite the contrary, both were bad across the board.
@@ -795,8 +798,11 @@ I'm confident saying it is not.
 
 The 11-bit version on the other hand was surprisingly bad, and was never even close to beating
 the standard 8-bit radix implementation, even when reducing the counter width down to 32-bits
-to compensate for the larger number of buckets. My current interpretation is that increasing
-L1D cache pressure with larger histograms is actually detrimental to overall performance.
+to compensate for the larger number of buckets. This variant is one you sometimes see in the wild,
+and I can guarantee you that it's _almost_ certainly a pessimization over just using octets.
+
+My current interpretation as to why, is that increasing L1D cache pressure with larger histograms is
+actually detrimental to overall performance.
 
 There is perhaps a world with bigger caches and faster memory where going wider is better,
 but for now it seems eight bits reigns supreme.
@@ -837,7 +843,10 @@ The vector instructions afforded by x86-64 (SSE, AVX, AVX2) does not seem to pro
 to a vectorized implementation that is worth it in practice. The issue seems to be poor
 gather/scatter support. I'm looking forward to be proven wrong about this in the future.
 
-For other architectures this may be more viable.
+There are optimized histogram functions [out there](https://gist.github.com/rygorous/bf1659bf6cd1752ed114367d4b87b302),
+and with AVX-512 it certainly seems more viable, but I have yet to personally explore this space.
+
+For other architectures this may be more or less viable.
 
 ## <a name="cpp-implementation"></a> C++ Implementation
 
