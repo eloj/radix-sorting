@@ -48,6 +48,7 @@ All code is provided under the [MIT License](LICENSE).
     + [Vectorized histogramming](#vectorization)
 + [C++ Implementation](#cpp-implementation)
     + [Benchmarks](#cpp-benchmark)
++ [Downsides](#downsides)
 + [Esoterics](#esoterics)
     + [Uniquely sorting with bitmaps](#bm-unique)
     + [Listing 7](#listing_bm16): Bitmap sort
@@ -903,8 +904,7 @@ It's not worth talking about specific numbers at this point in time, but some ge
 
 You will notice that there's a cut-off point, usually after a few hundred or so keys, where radix sort
 starts beating the other algorithms. This is due to the overhead of initializing, generating and
-accessing histograms. In practice we're more likely to care about performance when sorting a lot of keys vs
-sorting a few, and we can always implement a hybrid which switches to a sort which handles small inputs better,
+accessing histograms. We can always implement a hybrid which switches to a sort that handles small inputs better,
 giving us the best of both worlds.
 
 The cost of allocating the auxiliary sorting buffer is not included in the timings by default. If you care
@@ -914,6 +914,16 @@ especially when there is little other pressure on the memory allocator during th
 
 Because we're sorting random data, the column-skipping optimization and pre-sorted detection is extremely
 unlikely to kick in, so while the benchmark is realistic, it is by no means a best-case scenario.
+
+## <a name="downsides"></a> Downsides
+
+The main downside to _out-of-place_ implementations is that the natural interface is different from
+"regular" _in-place_ sorts. This becomes a problem when you need to conform to _pre-existing interfaces_ in e.g
+programming language standard libraries and tools. You can work around this in various ways, but this either sacrifices
+performance, or complicates the implementation. Take the hit of allocating and deallocating the auxilary storage every call,
+or keep a lazily or pre-allocated, and possibly growing, block of memory around that can be reused.
+
+They are also, as a general rule, not great for very small inputs.
 
 ## <a name="esoterics"></a> Esoterics
 
