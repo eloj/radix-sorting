@@ -844,8 +844,8 @@ The vector instructions afforded by x86-64 (SSE, AVX, AVX2) does not seem to pro
 to a vectorized implementation that is worth it in practice. The issue seems to be poor
 gather/scatter support. I'm looking forward to be proven wrong about this in the future.
 
-There are optimized histogram functions [out there](https://gist.github.com/rygorous/bf1659bf6cd1752ed114367d4b87b302),
-and with AVX-512 it certainly seems more viable, but I have yet to personally explore this space.
+There are optimized histogram functions [out there](https://gist.github.com/rygorous/a86a5cf348922cdea357c928e32fc7e0),
+and with newer instruction set extensions it certainly seems more viable, but I have yet to personally explore this space.
 
 For other architectures this may be more or less viable.
 
