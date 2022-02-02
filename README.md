@@ -958,7 +958,7 @@ section 1.2, and his Dr.Dobb's column [Algorithm Alley](http://www.drdobbs.com/a
 ## <a name="todo"></a> TODO
 
 + Point out places where endianess could matter (i.e float conversion)
-+ MSB - The other path
++ The other path: [MSB Radix String Sorting](https://github.com/eloj/radix-string-sorting)
 + Buc--ket sort
 + Ame--rican Flag Sort
 
