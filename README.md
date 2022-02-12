@@ -45,7 +45,7 @@ All code is provided under the [MIT License](LICENSE).
     + [Wider or narrower radix](#radix-width)
     + [Key rewriting](#key-rewriting)
     + [Prefetching](#prefetching)
-    + [Vectorized histogramming](#vectorization)
+    + [SIMD and Vectorization](#vectorization)
 + [C++ Implementation](#cpp-implementation)
     + [Benchmarks](#cpp-benchmark)
 + [Downsides](#downsides)
@@ -838,11 +838,10 @@ to his code that was running on a Pentium 3.
 
 I'll put this in the *TBD* column for now.
 
-### <a name="vectorization"></a> Vectorized histogramming
+### <a name="vectorization"></a> SIMD and Vectorization
 
-The vector instructions afforded by x86-64 (SSE, AVX, AVX2) does not seem to provide a path
-to a vectorized implementation that is worth it in practice. The issue seems to be poor
-gather/scatter support. I'm looking forward to be proven wrong about this in the future.
+See "[Prefix Sum with SIMD](https://en.algorithmica.org/hpc/algorithms/prefix/)" for various
+approaches to using SIMD (AVX2 specifically) to calculate prefix sums.
 
 There are optimized histogram functions [out there](https://gist.github.com/rygorous/a86a5cf348922cdea357c928e32fc7e0),
 and with newer instruction set extensions it certainly seems more viable, but I have yet to personally explore this space.
