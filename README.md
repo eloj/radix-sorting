@@ -549,7 +549,7 @@ better to keep the number of passes down. To sort variable length keys you would
 have to pad all keys on the left (MSD) side until they're the length of the longest key.
 
 This is to say, an LSB implemention is not well suited to sort character strings of any
-significant length. For those, a MSB radix sort is better.
+significant length. For those, a [MSB radix sort](https://github.com/eloj/radix-string-sorting) is better.
 
 For sorting floats, doubles or other fixed-width keys, or changing the sort order,
 we can still use the LSB implementation as-is. The trick is to map the keys onto
@@ -576,7 +576,7 @@ and reading the result backwards, which obviously will give you the _last_ like-
 ### <a name="signed-keys"></a>Signed integer keys
 
 To treat the key as a signed integer, we need to manipulate the sign-bit,
-since by default this is set for negative numbers, meaning they would appear
+which is the top-most 'most significant' bit, since by default this is set for negative numbers, meaning they would appear
 at the end of the result. Using the [xor operator](https://en.wikipedia.org/wiki/Bitwise_operation#XOR) we flip the top bit, which
 neatly solves the problem:
 
@@ -956,7 +956,7 @@ section 1.2, and his Dr.Dobb's column [Algorithm Alley](http://www.drdobbs.com/a
 
 ## <a name="todo"></a> TODO
 
-+ Point out places where endianess could matter (i.e float conversion)
++ More graphs, performance metrics.
 + The other path: [MSB Radix String Sorting](https://github.com/eloj/radix-string-sorting)
 + Buc--ket sort
 + Ame--rican Flag Sort
