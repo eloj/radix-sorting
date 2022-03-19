@@ -39,7 +39,7 @@ All code is provided under the [MIT License](LICENSE).
 + [Optimizations](#optimizations)
     + [Hybrids](#hybrids)
     + [Pre-sorted detection](#sort-detection)
-    + [Column skipping](#column-skipping)
+    + [Column skipping / Trivial Passes](#column-skipping)
     + [Key compaction](#key-compaction)
     + [Histogram memory](#histogram-memory)
     + [Wider or narrower radix](#radix-width)
@@ -668,12 +668,12 @@ Pushing further, say trying to detect already sorted columns, didn't seem worth 
 effort in my experiments. You don't want to add too many conditionals to the
 histogram loop.
 
-### <a name="column-skipping"></a >Column skipping
+### <a name="column-skipping"></a >Column skipping / Trivial Passes
 
 If every key has the same value for a key-radix aligned portion, then the sort loop for that column will
 simply be a copy from one buffer to another, which is a waste.
 
-Fortunately detecting this is easy, and does not -- as is sometimes shown -- require a loop over the
+Fortunately detecting a 'trivial pass' is easy, and does not -- as is sometimes shown -- require a loop over the
 histogram _looking_ for a non-zero count and checking if it's equal the number of keys being sorted.
 
 Instead we can simply _sample any key_, and check the corresponding histogram entries directly.
