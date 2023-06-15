@@ -686,6 +686,8 @@ and then we _directly probe_ those entries in the histogram(s). No searching req
 Iff the corresponding count is equal to the number of keys to be sorted, all the values in
 the column are the same and it can be skipped.
 
+[EASTL](https://github.com/electronicarts/EASTL/blob/e757b44f712902a78fe22886842eaba25e0a7797/include/EASTL/sort.h#L1648) use this optimization.
+
 Notice how you could sample _any_ key, and the result would be the same.
 
 ```c
@@ -769,12 +771,12 @@ pay off. In an experiment, halving the histogram size by changing the counter ty
 from `size_t` to `uint32_t` improved performance when sorting N<100 items by ~33%.
 This effect fades out as the input size grows in proportion to the histograms.
 
-It may be possible to efficiently do the histogramming for the _next pass_
-within the sort loop of the _current pass_, reducing the memory
-footprint to two histogram buffers in the unrolled form.
+It's possible to do the histogramming for the _next pass_ within the sort loop
+of the _current pass_, reducing the memory footprint to two histogram buffers
+in the unrolled form.
 
-That said, it's hard to imagine a scenario where this would be a win on a typical
-"big CPU" system where memory and cache is plentiful and prefetching efficient.
+EASTL, while having a conventional outer sorting loop, uses this fusing approach anyway,
+[noting that it](https://github.com/electronicarts/EASTL/blob/e757b44f712902a78fe22886842eaba25e0a7797/include/EASTL/sort.h#L1644) "_avoids memory traffic / cache pressure of reading keys in a separate operation_".
 
 ### <a name="radix-width"></a> Wider or narrower radix
 
