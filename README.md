@@ -969,7 +969,7 @@ section 1.2, and his Dr.Dobb's column [Algorithm Alley](http://www.drdobbs.com/a
 
 ## <a name="contributors"></a> Contributors
 
-* Eddy Jansson - [@el0j](https://twitter.com/el0j) - [github](https://github.com/eloj)
+* Eddy Jansson - [@el0j](https://mastodon.gamedev.place/@el0j) - [github](https://github.com/eloj)
 
 ## <a name="resources"></a> Resources
 
