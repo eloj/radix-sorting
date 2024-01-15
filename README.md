@@ -199,7 +199,7 @@ the next same-keyed entry is written just after.
 
 Because we are processing the input entries in order, from the lowest to the highest index, and preserving
 this order when we write them out, this sort is in essence _stable_. That said, it's a bit of a pointless distinction
-since without any other data associated with the keys, there's nothing that distinguishes same keys from one other.
+since without any other data associated with the keys, there's nothing that distinguishes same keys from one another.
 
 With a few basic modifications, we arrive at:
 
