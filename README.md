@@ -126,7 +126,7 @@ use this to sort records with multiple pieces of data.
   that is upgraded to a prefix sum and used to place elements into an output array. We'll get there.
 
 [^footcntscantype]: The exclusive-scan can be replaced with an inclusive-scan, if we then update the
-  key index first -- i.e decrement-then-fetch instead of fetch-then-increment -- in the sort loop, and
+  key index first in the sort loop -- i.e decrement-then-fetch instead of fetch-then-increment -- and
   additionally process the input in reverse order if we want a stable sort. Other than the reverse scan
   over the input, this can lead to slighly less complex code, and you don't risk overflowing the key offsets.
   See Listing 3 source file for an example.
