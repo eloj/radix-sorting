@@ -90,7 +90,7 @@ and benchmark.
 Possibly the simplest way to sort an array of integers, is to simply count how many there are
 of each, and use those counts to write the result.
 
-This is the most basic [counting sort](https://en.wikipedia.org/wiki/Counting_sort).
+This is the most basic [counting sort](https://en.wikipedia.org/wiki/Counting_sort)[^footcountsort].
 
 <a name="listing_cs8"></a>[Listing 1](counting_sort_8.c):
 
@@ -121,6 +121,9 @@ integer. For 8- and 16-bit numbers this would amount to `2^8*4`=1KiB and `2^16*4
 
 Again, we're only sorting an array of integers, nothing more. It's not immediately obvious how we could
 use this to sort records with multiple pieces of data.
+
+[^footcountsort]: This is a bit of white lie, because counting sort is _usually_ presented with a `counts` array
+  that is upgraded to a prefix sum and used to place elements into an output array. We'll get there.
 
 [^footcntsize]: As the wikipedia page explains, it's really the maximum difference of the keys involved that matters.
   Some implementations can be seen scanning the input data to determine and allocate just enough entries to fit
