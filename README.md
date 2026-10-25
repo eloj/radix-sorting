@@ -10,6 +10,8 @@ for [internal sorting](https://en.wikipedia.org/wiki/Internal_sort).
 
 Unless otherwise specified, this code is written foremost to be clear and easy to understand.
 
+No clankers were used in the preparation of these notes, nor the code in this repository.
+
 All code is provided under the [MIT License](LICENSE).
 
 [![Build status](https://github.com/eloj/radix-sorting/workflows/build/badge.svg)](https://github.com/eloj/radix-sorting/actions/workflows/c-cpp.yml)
