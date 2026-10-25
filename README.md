@@ -963,7 +963,7 @@ Since we're using a single bit per value we have extend the magnitude of keys we
 per unit memory by a factor of 32 or 64. We can now go up to 24-bit keys in only 2MiB memory.
 
 Jon Bentley originally presented a scenario where this approach could be useful in his book [Programming Pearls, 2nd ed](https://archive.org/details/ProgrammingPearls2ndEditionJonBentley/page/n229),
-section 1.2, and his Dr.Dobb's column [Algorithm Alley](http://www.drdobbs.com/architecture-and-design/algorithm-alley/184411142?pgno=1).
+section 1.2, and his Dr.Dobb's column [Algorithm Alley](https://web.archive.org/web/20150904/http://www.drdobbs.com/architecture-and-design/algorithm-alley/184411142?pgno=1) from December 1, 1999.
 
 ## <a name="todo"></a> TODO
 
