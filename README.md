@@ -125,6 +125,12 @@ use this to sort records with multiple pieces of data.
 [^footcountsort]: This is a bit of white lie, because counting sort is _usually_ presented with a `counts` array
   that is upgraded to a prefix sum and used to place elements into an output array. We'll get there.
 
+[^footcntscantype]: The exclusive-scan can be replaced with an inclusive-scan, if we then update the
+  key index first -- i.e decrement-then-fetch instead of fetch-then-increment -- in the sort loop, and
+  additionally process the input in reverse order if we want a stable sort. Other than the reverse scan
+  over the input, this can lead to slighly less complex code, and you don't risk overflowing the key offsets.
+  See Listing 3 source file for an example.
+
 [^footcntsize]: As the wikipedia page explains, it's really the maximum difference of the keys involved that matters.
   Some implementations can be seen scanning the input data to determine and allocate just enough entries to fit
   either `max(key) + 1`, or tighter, `max(key) - min(key) + 1` keys. However, unless you do this because you
@@ -185,7 +191,7 @@ array is required; the algorithm would break if we tried to write directly into 
 
 However, the _main_ difference between this and the first variant is that we're no longer directly writing the
 output from the counts. Instead the counts are re-processed into a [prefix sum](https://en.wikipedia.org/wiki/Prefix_sum)
-(or _exclusive scan_) in the second loop.
+(here _exclusive scan_) in the second loop[^footcntscantype].
 
 This gives us, for each input value, its first location in the sorted output array, i.e
 the value of `cnt[j]` tells us the array index at which to write the first _j_ to the output, because `cnt[j]`

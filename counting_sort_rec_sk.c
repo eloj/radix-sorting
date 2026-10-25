@@ -22,7 +22,7 @@ static void counting_sort_rec_sk(struct sortrec *arr, struct sortrec *aux, size_
 		cnt[k]++;
 	}
 
-	// Calculate prefix sums.
+	// Calculate prefix sums (exclusive scan)
 	size_t a = 0;
 	for (int j = 0 ; j < 256 ; ++j) {
 		size_t b = cnt[j];
@@ -37,6 +37,34 @@ static void counting_sort_rec_sk(struct sortrec *arr, struct sortrec *aux, size_
 		size_t dst = cnt[k];
 		aux[dst] = arr[i];
 		cnt[k]++;
+	}
+}
+
+/*
+	Variant with the more traditional inclusive scan + reverse scan over input.
+*/
+static void counting_sort_rec_sk_inclusive(struct sortrec *arr, struct sortrec *aux, size_t n)
+{
+	size_t cnt[256] = { 0 };
+	int i;
+
+	// Count number of occurrences of each key.
+	for (i = 0 ; i < n ; ++i) {
+		uint8_t k = key_of(arr + i);
+		cnt[k]++;
+	}
+
+	// Calculate prefix sum (inclusive scan)
+	for (i = 1 ; i < 256 ; ++i) {
+		cnt[i] += cnt[i-1];
+	}
+
+	// Sort elements, processing input in reverse to be stable.
+	for (i = n - 1 ; i >= 0 ; --i) {
+		// Get the key for the current entry.
+		uint8_t k = key_of(arr + i);
+		size_t dst = --cnt[k];
+		aux[dst] = arr[i];
 	}
 }
 
@@ -62,7 +90,8 @@ int main(int argc, char *argv[]) {
 
 	struct sortrec *aux = malloc(sizeof(arr[0]) * N);
 
-	counting_sort_rec_sk(arr, aux, N);
+	// counting_sort_rec_sk(arr, aux, N);
+	counting_sort_rec_sk_inclusive(arr, aux, N);
 
 	print_array_rec(aux, N);
 
