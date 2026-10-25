@@ -122,10 +122,10 @@ use this to sort records with multiple pieces of data.
 [^footcountsort]: This is a bit of white lie, because counting sort is _usually_ presented with a `counts` array
   that is upgraded to a prefix sum and used to place elements into an output array. We'll get there.
 
-[^footcntscantype]: The exclusive-scan can be replaced with an inclusive-scan, if we then update the
+[^footcntscantype]: The exclusive-scan can be changed into an inclusive-scan, if we then update the
   key index first in the sort loop -- i.e decrement-then-fetch instead of fetch-then-increment -- and
   additionally process the input in reverse order if we want a stable sort. Other than the reverse scan
-  over the input, this can lead to slighly less complex code, and you don't risk overflowing the key offsets.
+  over the input, this can lead to slighly less complex code, or simply have better language support.
   See Listing 3 source file for an example.
 
 [^footcntsize]: As the wikipedia page explains, it's really the maximum difference of the keys involved that matters.
@@ -290,7 +290,7 @@ In a computer we deal with bits, which means the base is inherently two, not ten
 
 Because working with individual bits is in some sense "slow", we group multiple of
 them together into units that are either faster and/or more convenient to work with.
-One such grouping is into strings of eight bits, called octets or [bytes](https://en.wikipedia.org/wiki/Byte).
+One natural such grouping is into strings of eight bits, called octets or [bytes](https://en.wikipedia.org/wiki/Byte).
 
 An octet can represent `2^8` or `256` different values. In other words, just
 as processing a base-10 number digit-by-digit is operating in radix-10, processing
